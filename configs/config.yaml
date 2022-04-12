@@ -7,6 +7,7 @@ server:
     timeout: 1s
 data:
   database:
+    table: "leaf_alloc"
     driver: mysql
     source: root:root@tcp(127.0.0.1:3306)/test
     open_conn: 50

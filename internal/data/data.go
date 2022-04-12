@@ -11,17 +11,18 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewGormClient)
+var ProviderSet = wire.NewSet(NewData, NewGormClient, NewSegmentIDRepo)
 
 // Data .
 type Data struct {
-	db      *gorm.DB
-	RWMutex *sync.RWMutex
-	log     *log.Helper
+	db        *gorm.DB
+	tableName string
+	RWMutex   *sync.RWMutex
+	log       *log.Helper
 }
 
 // NewData .
-func NewData(db *gorm.DB, logger log.Logger) (*Data, func(), error) {
+func NewData(conf *conf.Data, db *gorm.DB, logger log.Logger) (*Data, func(), error) {
 	l := log.NewHelper(log.With(logger, "module", "segment/data"))
 
 	cleanup := func() {
@@ -31,7 +32,8 @@ func NewData(db *gorm.DB, logger log.Logger) (*Data, func(), error) {
 			s.Close()
 		}
 	}
-	return &Data{db: db, RWMutex: &sync.RWMutex{}, log: l}, cleanup, nil
+	return &Data{db: db, RWMutex: &sync.RWMutex{},
+		tableName: conf.Database.TableName, log: l}, cleanup, nil
 }
 
 // NewEtcdClient 创建 Etcd 客户端

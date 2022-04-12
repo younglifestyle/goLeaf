@@ -32,6 +32,7 @@ message Data {
     int32 idle = 3;
     google.protobuf.Duration idle_timeout = 4;
     int32 open_conn = 5;
+    string table_name = 6;
   }
   message Etcd {
     repeated string endpoints = 1;

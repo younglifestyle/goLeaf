@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	github.com/go-kratos/kratos/v2 v2.2.1
-	github.com/golang/protobuf v1.5.2
 	github.com/google/wire v0.5.0
 	go.etcd.io/etcd/client/v3 v3.5.2
 	google.golang.org/genproto v0.0.0-20220222213610-43724f9ea8cf
@@ -21,6 +20,7 @@ require (
 	github.com/go-playground/form/v4 v4.2.0 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/subcommands v1.0.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
