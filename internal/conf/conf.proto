@@ -1,0 +1,42 @@
+syntax = "proto3";
+package kratos.api;
+
+option go_package = "seq-server/internal/conf;conf";
+
+import "google/protobuf/duration.proto";
+
+message Bootstrap {
+  Server server = 1;
+  Data data = 2;
+}
+
+message Server {
+  message HTTP {
+    string network = 1;
+    string addr = 2;
+    google.protobuf.Duration timeout = 3;
+  }
+  message GRPC {
+    string network = 1;
+    string addr = 2;
+    google.protobuf.Duration timeout = 3;
+  }
+  HTTP http = 1;
+  GRPC grpc = 2;
+}
+
+message Data {
+  message Database {
+    string driver = 1;
+    string source = 2;
+    int32 idle = 3;
+    google.protobuf.Duration idle_timeout = 4;
+    int32 open_conn = 5;
+  }
+  message Etcd {
+    repeated string endpoints = 1;
+    google.protobuf.Duration dial_timeout = 2;
+  }
+  Database database = 1;
+  Etcd etcd = 2;
+}
