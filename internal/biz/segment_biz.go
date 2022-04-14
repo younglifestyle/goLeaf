@@ -13,11 +13,9 @@ import (
 )
 
 var (
-	// ErrUserNotFound is user not found.
-	ErrUserNotFound = errors.NotFound(v1.ErrorReason_USER_NOT_FOUND.String(), "user not found")
-	ErrDBOps        = errors.NotFound(v1.ErrorReason_USER_NOT_FOUND.String(), "update and get id error")
+	ErrDBOps = errors.NotFound(v1.ErrorReason_DB_OPERATE.String(), "update and get id error")
 	// ErrTagNotFound key不存在时的异常码
-	ErrTagNotFound = errors.NotFound(v1.ErrorReason_USER_NOT_FOUND.String(), "biz tag not found")
+	ErrTagNotFound = errors.NotFound(v1.ErrorReason_BIZ_TAG_NOT_FOUND.String(), "biz tag not found")
 )
 
 // Segment is a Segment model.

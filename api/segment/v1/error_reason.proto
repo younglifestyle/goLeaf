@@ -8,6 +8,7 @@ option java_package = "helloworld.v1";
 option objc_class_prefix = "APIHelloworldV1";
 
 enum ErrorReason {
-  GEETER_UNSPECIFIED = 0;
-  USER_NOT_FOUND = 1;
+  SEG_SERVER_UNSPECIFIED = 0;
+  BIZ_TAG_NOT_FOUND = 1;
+  DB_OPERATE = 2;
 }
