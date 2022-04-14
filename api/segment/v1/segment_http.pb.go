@@ -19,35 +19,11 @@ const _ = http.SupportPackageIsVersion1
 
 type GreeterHTTPServer interface {
 	GenSegmentId(context.Context, *IDRequest) (*IDReply, error)
-	SayHello(context.Context, *HelloRequest) (*HelloReply, error)
 }
 
 func RegisterGreeterHTTPServer(s *http.Server, srv GreeterHTTPServer) {
 	r := s.Route("/")
-	r.GET("/helloworld/{name}", _Greeter_SayHello0_HTTP_Handler(srv))
-	r.GET("/api/segment/get/{name}", _Greeter_GenSegmentId0_HTTP_Handler(srv))
-}
-
-func _Greeter_SayHello0_HTTP_Handler(srv GreeterHTTPServer) func(ctx http.Context) error {
-	return func(ctx http.Context) error {
-		var in HelloRequest
-		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
-		http.SetOperation(ctx, "/helloworld.v1.Greeter/SayHello")
-		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.SayHello(ctx, req.(*HelloRequest))
-		})
-		out, err := h(ctx, &in)
-		if err != nil {
-			return err
-		}
-		reply := out.(*HelloReply)
-		return ctx.Result(200, reply)
-	}
+	r.GET("/api/segment/get/{tag}", _Greeter_GenSegmentId0_HTTP_Handler(srv))
 }
 
 func _Greeter_GenSegmentId0_HTTP_Handler(srv GreeterHTTPServer) func(ctx http.Context) error {
@@ -74,7 +50,6 @@ func _Greeter_GenSegmentId0_HTTP_Handler(srv GreeterHTTPServer) func(ctx http.Co
 
 type GreeterHTTPClient interface {
 	GenSegmentId(ctx context.Context, req *IDRequest, opts ...http.CallOption) (rsp *IDReply, err error)
-	SayHello(ctx context.Context, req *HelloRequest, opts ...http.CallOption) (rsp *HelloReply, err error)
 }
 
 type GreeterHTTPClientImpl struct {
@@ -87,22 +62,9 @@ func NewGreeterHTTPClient(client *http.Client) GreeterHTTPClient {
 
 func (c *GreeterHTTPClientImpl) GenSegmentId(ctx context.Context, in *IDRequest, opts ...http.CallOption) (*IDReply, error) {
 	var out IDReply
-	pattern := "/api/segment/get/{name}"
+	pattern := "/api/segment/get/{tag}"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation("/helloworld.v1.Greeter/GenSegmentId"))
-	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &out, err
-}
-
-func (c *GreeterHTTPClientImpl) SayHello(ctx context.Context, in *HelloRequest, opts ...http.CallOption) (*HelloReply, error) {
-	var out HelloReply
-	pattern := "/helloworld/{name}"
-	path := binding.EncodeURL(pattern, in, true)
-	opts = append(opts, http.Operation("/helloworld.v1.Greeter/SayHello"))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {

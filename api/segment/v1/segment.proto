@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package helloworld.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "seq-server/api/segment/v1;v1";
+
+// The greeting service definition.
+service Greeter {
+
+  // 号段模式
+  rpc GenSegmentId (IDRequest) returns (IDReply) {
+    option (google.api.http) = {
+      get: "/api/segment/get/{tag}"
+    };
+  }
+}
+
+// 申请ID的BIZ Tag
+message IDRequest {
+  string tag = 1;
+}
+
+// 申请到的ID
+message IDReply {
+  string id = 1;
+}

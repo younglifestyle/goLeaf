@@ -9,6 +9,7 @@ package main
 import (
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/middleware"
 	"seg-server/internal/biz"
 	"seg-server/internal/conf"
 	"seg-server/internal/data"
@@ -19,7 +20,7 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confData *conf.Data, middlewareMiddleware middleware.Middleware, logger log.Logger) (*kratos.App, func(), error) {
 	db := data.NewGormClient(confData, logger)
 	dataData, cleanup, err := data.NewData(confData, db, logger)
 	if err != nil {
@@ -28,8 +29,8 @@ func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*
 	segmentRepo := data.NewSegmentIDRepo(dataData, logger)
 	segmentUsecase := biz.NewSegmentUsecase(segmentRepo, logger)
 	segmentService := service.NewSegmentService(segmentUsecase, logger)
-	httpServer := server.NewHTTPServer(confServer, segmentService, logger)
-	grpcServer := server.NewGRPCServer(confServer, segmentService, logger)
+	httpServer := server.NewHTTPServer(confServer, segmentService, middlewareMiddleware, logger)
+	grpcServer := server.NewGRPCServer(confServer, segmentService, middlewareMiddleware, logger)
 	app := newApp(logger, httpServer, grpcServer)
 	return app, func() {
 		cleanup()

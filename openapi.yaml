@@ -7,14 +7,14 @@ info:
     description: The greeting service definition.
     version: 0.0.1
 paths:
-    /api/segment/get/{name}:
+    /api/segment/get/{tag}:
         get:
             tags:
                 - Greeter
             description: 号段模式
             operationId: Greeter_GenSegmentId
             parameters:
-                - name: name
+                - name: tag
                   in: path
                   required: true
                   schema:
@@ -26,37 +26,12 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/IDReply'
-    /helloworld/{name}:
-        get:
-            tags:
-                - Greeter
-            description: Sends a greeting
-            operationId: Greeter_SayHello
-            parameters:
-                - name: name
-                  in: path
-                  required: true
-                  schema:
-                    type: string
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/HelloReply'
 components:
     schemas:
-        HelloReply:
-            type: object
-            properties:
-                message:
-                    type: string
-            description: The response message containing the greetings
         IDReply:
             type: object
             properties:
-                message:
+                id:
                     type: string
             description: 申请到的ID
 tags:

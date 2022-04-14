@@ -6,6 +6,7 @@ import (
 	"go.etcd.io/etcd/client/v3"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 	"seg-server/internal/conf"
 	"sync"
 )
@@ -56,7 +57,11 @@ func NewGormClient(c *conf.Data, logger log.Logger) *gorm.DB {
 	l := log.NewHelper(log.With(logger, "module", "gorm/data"))
 
 	// 参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name 获取详情
-	db, err := gorm.Open(mysql.Open(c.Database.Source), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(c.Database.Source), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: true,
+		},
+	})
 	if err != nil {
 		l.Fatalf("failed opening connection to db: %v", err)
 	}
