@@ -83,7 +83,7 @@ func (uc *SegmentUsecase) GetID(ctx context.Context, tag string) (int64, error) 
 	}
 
 	seg.Lock()
-	// NOTE: make sure curSeq begin with maxSeq when start from 0
+	// 确保 segment 从 0 开始时以 max_id 开头
 	if seg.GetValue().Load() == 0 || seg.GetValue().Load()+1 > seg.MaxId {
 		if err := uc.nextStep(ctx, seg); err != nil {
 			seg.Unlock()
