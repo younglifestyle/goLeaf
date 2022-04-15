@@ -6,7 +6,7 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	v1 "seg-server/api/segment/v1"
+	v1 "seg-server/api/leaf-grpc/v1"
 	"seg-server/internal/conf"
 	"seg-server/internal/service"
 )
@@ -30,6 +30,6 @@ func NewHTTPServer(c *conf.Server, segmentService *service.SegmentService, metri
 	}
 	srv := http.NewServer(opts...)
 	srv.Handle("/metrics", promhttp.Handler())
-	v1.RegisterGreeterHTTPServer(srv, segmentService)
+	v1.RegisterLeafHTTPServer(srv, segmentService)
 	return srv
 }

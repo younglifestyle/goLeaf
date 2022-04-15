@@ -72,6 +72,6 @@ func (s *SegmentIdRepo) UpdateAndGetMaxId(ctx context.Context, tag string) (leaf
 func NewSegmentIDRepo(data *Data, logger log.Logger) biz.SegmentRepo {
 	return &SegmentIdRepo{
 		data: data,
-		log:  log.NewHelper(log.With(logger, "module", "segment-repo/data")),
+		log:  log.NewHelper(log.With(logger, "module", "leaf-grpc-repo/data")),
 	}
 }

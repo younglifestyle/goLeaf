@@ -5,7 +5,7 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
-	v1 "seg-server/api/segment/v1"
+	v1 "seg-server/api/leaf-grpc/v1"
 	"seg-server/internal/conf"
 	"seg-server/internal/service"
 )
@@ -28,6 +28,6 @@ func NewGRPCServer(c *conf.Server, segmentService *service.SegmentService, metri
 		opts = append(opts, grpc.Timeout(c.Grpc.Timeout.AsDuration()))
 	}
 	srv := grpc.NewServer(opts...)
-	v1.RegisterGreeterServer(srv, segmentService)
+	v1.RegisterLeafServer(srv, segmentService)
 	return srv
 }

@@ -24,7 +24,7 @@ type Data struct {
 
 // NewData .
 func NewData(conf *conf.Data, db *gorm.DB, logger log.Logger) (*Data, func(), error) {
-	l := log.NewHelper(log.With(logger, "module", "segment/data"))
+	l := log.NewHelper(log.With(logger, "module", "leaf-grpc/data"))
 
 	cleanup := func() {
 		l.Info("closing the data resources")

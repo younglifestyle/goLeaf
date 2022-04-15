@@ -4,24 +4,24 @@ import (
 	"context"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
-	v1 "seg-server/api/segment/v1"
+	v1 "seg-server/api/leaf-grpc/v1"
 	"seg-server/internal/biz"
 	"strconv"
 )
 
 // SegmentService is a greeter service.
 type SegmentService struct {
-	v1.UnimplementedGreeterServer
+	v1.UnimplementedLeafServer
 
 	segmentUc *biz.SegmentUsecase
 	log       *log.Helper
 }
 
-// NewSegmentService new a segment service.
+// NewSegmentService new a leaf-grpc service.
 func NewSegmentService(segmentUc *biz.SegmentUsecase, logger log.Logger) *SegmentService {
 	return &SegmentService{
 		segmentUc: segmentUc,
-		log:       log.NewHelper(log.With(logger, "module", "segment/service")),
+		log:       log.NewHelper(log.With(logger, "module", "leaf-grpc/service")),
 	}
 }
 

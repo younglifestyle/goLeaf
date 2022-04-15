@@ -9,7 +9,7 @@ data:
   database:
     table_name: "leaf_alloc"
     driver: mysql
-    source: root:123@tcp(127.0.0.1:3306)/leaf?charset=utf8&parseTime=True&loc=Local
+    source: root:123@tcp(127.0.0.1:3306)/leaf-grpc?charset=utf8&parseTime=True&loc=Local
     open_conn: 50
     idle: 10
     idle_timeout: 14400s

@@ -6,7 +6,7 @@ import (
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"go.uber.org/atomic"
-	v1 "seg-server/api/segment/v1"
+	v1 "seg-server/api/leaf-grpc/v1"
 	"seg-server/internal/biz/model"
 	"sync"
 	"time"
@@ -17,11 +17,6 @@ var (
 	// ErrTagNotFound key不存在时的异常码
 	ErrTagNotFound = errors.NotFound(v1.ErrorReason_BIZ_TAG_NOT_FOUND.String(), "biz tag not found")
 )
-
-// Segment is a Segment model.
-type Segment struct {
-	Hello string
-}
 
 // SegmentRepo is a Greater repo.
 type SegmentRepo interface {
@@ -45,7 +40,7 @@ func NewSegmentUsecase(repo SegmentRepo, logger log.Logger) *SegmentUsecase {
 	s := &SegmentUsecase{
 		repo: repo,
 		segs: make(map[string]*model.Segment),
-		log:  log.NewHelper(log.With(logger, "module", "segment/biz"))}
+		log:  log.NewHelper(log.With(logger, "module", "leaf-grpc/biz"))}
 
 	s.loadSeqs()
 	go s.loadProc()
@@ -81,7 +76,7 @@ func (uc *SegmentUsecase) GetID(ctx context.Context, tag string) (int64, error) 
 	}
 
 	seg.Lock()
-	// 确保 segment 从 0 开始时以 max_id 开头
+	// 确保 leaf-grpc 从 0 开始时以 max_id 开头
 	if seg.GetValue().Load() == 0 || seg.GetValue().Load()+1 > seg.MaxId {
 		if err := uc.nextStep(ctx, seg); err != nil {
 			seg.Unlock()
