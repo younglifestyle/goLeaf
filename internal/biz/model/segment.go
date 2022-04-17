@@ -2,20 +2,27 @@ package model
 
 import (
 	"go.uber.org/atomic"
-	"sync"
 )
 
 type Segment struct {
-	BizKey string
-	Value  *atomic.Int64
-	MaxId  int64
-	Step   int
-
-	sync.Mutex
+	SegmentParam
+	Buffer *SegmentBuffer // 当前号段所属的SegmentBuffer
 }
 
-func (s *Segment) GetKey() string {
-	return s.BizKey
+type SegmentParam struct {
+	Value *atomic.Int64 // 内存生成的每一个id号
+	MaxId int64         // 当前号段允许的最大id值
+	Step  int           // 步长 暂固定
+}
+
+func NewSegment(segmentBuffer *SegmentBuffer) *Segment {
+	s := &Segment{
+		SegmentParam: SegmentParam{
+			Value: atomic.NewInt64(0),
+		},
+		Buffer: segmentBuffer,
+	}
+	return s
 }
 
 func (s *Segment) GetValue() *atomic.Int64 {
@@ -45,4 +52,9 @@ func (s *Segment) SetStep(step int) {
 func (s *Segment) GetIdle() int64 {
 	value := s.GetValue().Load()
 	return s.GetMax() - value
+}
+
+// GetBuffer 获取当前号段所属的SegmentBuffer
+func (s *Segment) GetBuffer() *SegmentBuffer {
+	return s.Buffer
 }

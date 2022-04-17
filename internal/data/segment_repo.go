@@ -14,7 +14,7 @@ type SegmentIdRepo struct {
 }
 
 func (s *SegmentIdRepo) GetAllLeafAllocs(ctx context.Context) (leafs []*model.LeafAlloc, err error) {
-	if err = s.data.db.WithContext(ctx).Select("biz_tag",
+	if err = s.data.db.Table(s.data.tableName).WithContext(ctx).Select("biz_tag",
 		"max_id", "step", "update_time").Find(&leafs).Error; err != nil {
 
 		return nil, err
@@ -24,7 +24,7 @@ func (s *SegmentIdRepo) GetAllLeafAllocs(ctx context.Context) (leafs []*model.Le
 }
 
 func (s *SegmentIdRepo) GetLeafAlloc(ctx context.Context, tag string) (seg model.LeafAlloc, err error) {
-	if err = s.data.db.WithContext(ctx).Select("biz_tag",
+	if err = s.data.db.Table(s.data.tableName).WithContext(ctx).Select("biz_tag",
 		"max_id", "step").Where("biz_tag = ?", tag).First(&seg).Error; err != nil {
 
 		return
@@ -34,7 +34,7 @@ func (s *SegmentIdRepo) GetLeafAlloc(ctx context.Context, tag string) (seg model
 }
 
 func (s *SegmentIdRepo) GetAllTags(ctx context.Context) (tags []string, err error) {
-	if err = s.data.db.WithContext(ctx).
+	if err = s.data.db.Table(s.data.tableName).WithContext(ctx).
 		Pluck("biz_tag", &tags).Error; err != nil {
 
 		return

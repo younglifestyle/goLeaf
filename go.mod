@@ -1,6 +1,6 @@
 module seg-server
 
-go 1.17
+go 1.18
 
 require (
 	github.com/go-kratos/kratos/contrib/metrics/prometheus/v2 v2.0.0-20220414054820-d0b704b8f38d
