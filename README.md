@@ -1,51 +1,34 @@
-# Kratos Project Template
+## go-leaf 
 
-## Install Kratos
-```
-go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
-```
-## Create a service
-```
-# Create a template project
-kratos new server
+### 介绍
+Go实现的发号器，基于Kratos框架，适用于此微服务框架以及服务发现服务
 
-cd server
-# Add a proto template
-kratos proto add api/server/server.proto
-# Generate the proto code
-kratos proto client api/server/server.proto
-# Generate the source code of service by proto file
-kratos proto server api/server/server.proto -t internal/service
+gRPC访问性能与Leaf同
 
-go generate ./...
-go build -o ./bin/ ./...
-./bin/server -conf ./configs
-```
-## Generate other auxiliary files by Makefile
-```
-# Download and update dependencies
-make init
-# Generate API files (include: pb.go, http, grpc, validate, swagger) by proto file
-make api
-# Generate all files
-make all
-```
-## Automated Initialization (wire)
-```
-# install wire
-go get github.com/google/wire/cmd/wire
+### 使用
 
-# generate wire
-cd cmd/server
-wire
+- 创建表
+```mysql
+CREATE DATABASE leaf;
+CREATE TABLE `leaf_alloc` (
+    `biz_tag` varchar(128)  NOT NULL DEFAULT '', -- your biz unique name
+    `max_id` bigint(20) NOT NULL DEFAULT '1',
+    `step` int(11) NOT NULL,
+    `description` varchar(256)  DEFAULT NULL,
+    `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`biz_tag`)
+) ENGINE=InnoDB;
+
+insert into leaf_alloc(biz_tag, max_id, step, description) values('leaf-segment-test', 1, 2000, 'Test leaf Segment Mode Get Id');
 ```
 
-## Docker
-```bash
-# build
-docker build -t <your-docker-image-name> .
-
-# run
-docker run --rm -p 8000:8000 -p 9000:9000 -v </path/to/your/configs>:/data/conf <your-docker-image-name>
+- 启动服务
+```
+make build
+bin/seq-server -conf configs/config.yaml
 ```
 
+- 请求接口
+```
+curl http://localhost:8000/api/leaf-grpc/get/leaf-segment-test
+```
