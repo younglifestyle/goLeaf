@@ -68,6 +68,27 @@ func (s *SegmentIdRepo) UpdateAndGetMaxId(ctx context.Context, tag string) (leaf
 	return
 }
 
+func (s *SegmentIdRepo) UpdateMaxIdByCustomStepAndGetLeafAlloc(ctx context.Context, tag string, step int) (leafAlloc model.LeafAlloc, err error) {
+
+	err = s.data.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err = tx.Table(s.data.tableName).Where("biz_tag = ?", tag).
+			Update("max_id", gorm.Expr("max_id + ?", step)).Error; err != nil {
+
+			return err
+		}
+
+		if err = tx.Table(s.data.tableName).Select("biz_tag",
+			"max_id", "step").Where("biz_tag = ?", tag).First(&leafAlloc).Error; err != nil {
+
+			return err
+		}
+
+		return nil
+	})
+
+	return
+}
+
 // NewSegmentIDRepo .
 func NewSegmentIDRepo(data *Data, logger log.Logger) biz.SegmentRepo {
 	return &SegmentIdRepo{

@@ -21,19 +21,26 @@ var (
 	ErrIDTwoSegmentsAreNull = errors.InternalServer(v1.ErrorReason_IDTwoSegmentsAreNull.String(), "id two segments are null")
 )
 
+const (
+	SegmentDuration = time.Minute * 15
+	MaxStep         = 1000000
+)
+
 // SegmentRepo is a Greater repo.
 type SegmentRepo interface {
 	UpdateAndGetMaxId(ctx context.Context, tag string) (seg model.LeafAlloc, err error)
 	GetLeafAlloc(ctx context.Context, tag string) (seg model.LeafAlloc, err error)
 	GetAllTags(ctx context.Context) (tags []string, err error)
 	GetAllLeafAllocs(ctx context.Context) (leafs []*model.LeafAlloc, err error)
+	UpdateMaxIdByCustomStepAndGetLeafAlloc(ctx context.Context, tag string, step int) (leafAlloc model.LeafAlloc, err error)
 }
 
 // SegmentUsecase is a Segment usecase.
 type SegmentUsecase struct {
-	repo        SegmentRepo
-	singleGroup singleflight.Group
-	cache       sync.Map // biz-tag : model.SegmentBuffer
+	repo            SegmentRepo
+	singleGroup     singleflight.Group
+	segmentDuration int64    // 号段消耗时间
+	cache           sync.Map // biz-tag : model.SegmentBuffer
 
 	log *log.Helper
 }
@@ -84,12 +91,65 @@ func (uc *SegmentUsecase) updateSegmentFromDb(ctx context.Context, bizTag string
 
 	segmentBuffer := segment.GetBuffer()
 
-	leafAlloc, err = uc.repo.UpdateAndGetMaxId(ctx, bizTag)
-	if err != nil {
-		uc.log.Error("db error : ", err)
-		return fmt.Errorf("db error : %s %w", err, ErrDBOps)
+	// 如果buffer没有DB数据初始化(也就是第一次进行DB数据初始化)
+	if !segmentBuffer.IsInitOk() {
+		leafAlloc, err = uc.repo.UpdateAndGetMaxId(ctx, bizTag)
+		if err != nil {
+			uc.log.Error("db error : ", err)
+			return fmt.Errorf("db error : %s %w", err, ErrDBOps)
+		}
+		segmentBuffer.SetStep(leafAlloc.Step)
+		segmentBuffer.SetMinStep(leafAlloc.Step)
+	} else if segmentBuffer.GetUpdateTimeStamp() == 0 {
+		// 如果buffer的更新时间是0（初始是0，也就是第二次调用updateSegmentFromDb()）
+		leafAlloc, err = uc.repo.UpdateAndGetMaxId(ctx, bizTag)
+		if err != nil {
+			uc.log.Error("db error : ", err)
+			return fmt.Errorf("db error : %s %w", err, ErrDBOps)
+		}
+		segmentBuffer.SetUpdateTimeStamp(time.Now().Unix())
+		segmentBuffer.SetMinStep(leafAlloc.Step)
+	} else {
+		// 第三次以及之后的进来 动态设置nextStep
+		// 计算当前更新操作和上一次更新时间差
+		duration := time.Now().Unix() - segmentBuffer.GetUpdateTimeStamp()
+		nextStep := segmentBuffer.GetStep()
+		/**
+		 *  动态调整step
+		 *  1) duration < 15 分钟 : step 变为原来的2倍， 最大为 MAX_STEP
+		 *  2) 15分钟 <= duration < 30分钟 : nothing
+		 *  3) duration >= 30 分钟 : 缩小step, 最小为DB中配置的step
+		 *
+		 *  这样做的原因是认为15min一个号段大致满足需求
+		 *  如果updateSegmentFromDb()速度频繁(15min多次)，也就是
+		 *  如果15min这个时间就把step号段用完，为了降低数据库访问频率，
+		 *  我们可以扩大step大小，相反如果将近30min才把号段内的id用完，则可以缩小step
+		 */
+		// duration < 15 分钟 : step 变为原来的2倍. 最大为 MAX_STEP
+		if duration < int64(SegmentDuration) {
+			if nextStep*2 > MaxStep {
+				//do nothing
+			} else {
+				// 步数 * 2
+				nextStep = nextStep * 2
+			}
+		} else if duration < int64(SegmentDuration)*2 {
+			// 15分钟 < duration < 30分钟 : nothing
+		} else {
+			// duration > 30 分钟 : 缩小step, 最小为DB中配置的步数
+			if nextStep/2 >= segmentBuffer.GetMinStep() {
+				nextStep = nextStep / 2
+			}
+		}
+		leafAlloc, err = uc.repo.UpdateMaxIdByCustomStepAndGetLeafAlloc(ctx, bizTag, nextStep)
+		if err != nil {
+			uc.log.Error("custom db error : ", err)
+			return fmt.Errorf("custom db error : %s %w", err, ErrDBOps)
+		}
+		segmentBuffer.SetUpdateTimeStamp(time.Now().Unix())
+		segmentBuffer.SetStep(nextStep)
+		segmentBuffer.SetMinStep(leafAlloc.Step)
 	}
-	segmentBuffer.SetStep(leafAlloc.Step)
 
 	value := leafAlloc.MaxId - int64(segmentBuffer.GetStep())
 	segment.GetValue().Store(value)

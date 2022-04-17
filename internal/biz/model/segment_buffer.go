@@ -18,6 +18,7 @@ type SegmentBufferParam struct {
 	InitOk        bool         // DB的数据段数据是否初始化
 	ThreadRunning *atomic.Bool // 是否更新下一ID段的线程，是否在运行中
 	Step          int
+	MinStep       int
 	UpdatedTime   int64
 }
 
@@ -109,6 +110,14 @@ func (segbf *SegmentBuffer) GetStep() int {
 
 func (segbf *SegmentBuffer) SetStep(step int) {
 	segbf.Step = step
+}
+
+func (segbf *SegmentBuffer) GetMinStep() int {
+	return segbf.MinStep
+}
+
+func (segbf *SegmentBuffer) SetMinStep(minStep int) {
+	segbf.MinStep = minStep
 }
 
 func (segbf *SegmentBuffer) GetUpdateTimeStamp() int64 {
