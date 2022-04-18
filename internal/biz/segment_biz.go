@@ -159,34 +159,6 @@ func (uc *SegmentUsecase) updateSegmentFromDb(ctx context.Context, bizTag string
 	return
 }
 
-func (uc *SegmentUsecase) updateAnotherSegmentFromDb(ctx context.Context, bizTag string, segmentBuffer *model.SegmentBuffer) (err error) {
-
-	uc.log.Info("updateAnotherSegmentFromDb ....")
-
-	var leafAlloc model.LeafAlloc
-
-	leafAlloc, err = uc.repo.UpdateAndGetMaxId(ctx, bizTag)
-	if err != nil {
-		uc.log.Error("db error : ", err)
-		return fmt.Errorf("db error : %s %w", err, ErrDBOps)
-	}
-	segmentBuffer.SetStep(leafAlloc.Step)
-
-	value := leafAlloc.MaxId - int64(segmentBuffer.GetStep())
-	segment := segmentBuffer.GetSegments()[segmentBuffer.NextPos()]
-	segment.GetValue().Store(value)
-	segment.SetMax(leafAlloc.MaxId)
-	segment.SetStep(segmentBuffer.GetStep())
-
-	uc.log.Info("updateSegmentFromDb value : ", value, leafAlloc.MaxId)
-	uc.log.Infof("updateAnotherSegmentFromDb pointer : %p %p",
-		segmentBuffer.Segments[1], segment)
-	uc.log.Infof("info Next Current index : %+v",
-		*segmentBuffer.Segments[1])
-
-	return
-}
-
 func (uc *SegmentUsecase) loadNextSegmentFromDb(ctx context.Context, cacheSegmentBuffer *model.SegmentBuffer) {
 	segment := cacheSegmentBuffer.GetSegments()[cacheSegmentBuffer.NextPos()]
 	err := uc.updateSegmentFromDb(ctx, cacheSegmentBuffer.GetKey(), segment)
