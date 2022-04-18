@@ -1,7 +1,7 @@
 ## go-leaf 
 
 ### 介绍
-Go实现的发号器，基于Kratos框架，适用于此微服务框架以及服务发现服务
+Go实现的号段模式发号器，基于Kratos框架，适用于此微服务框架以及服务发现服务
 
 gRPC访问性能与Leaf同
 
@@ -30,5 +30,5 @@ bin/seq-server -conf configs/config.yaml
 
 - 请求接口
 ```
-curl http://localhost:8000/api/leaf-grpc/get/leaf-segment-test
+curl http://localhost:8000/api/segment/get/leaf-segment-test
 ```
