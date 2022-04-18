@@ -7,7 +7,7 @@ info:
     description: Leaf ID生成
     version: 0.0.1
 paths:
-    /api/leaf-grpc/get/{tag}:
+    /api/segment/get/{tag}:
         get:
             tags:
                 - Leaf

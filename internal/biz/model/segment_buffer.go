@@ -88,21 +88,21 @@ func (segbf *SegmentBuffer) GetThreadRunning() *atomic.Bool {
 	return segbf.ThreadRunning
 }
 
-//func (segbf *SegmentBuffer) RLock() {
-//	segbf.RWMutex.RLock()
-//}
-//
-//func (segbf *SegmentBuffer) RUnLock() {
-//	segbf.RWMutex.RUnlock()
-//}
-//
-//func (segbf *SegmentBuffer) WLock() {
-//	segbf.RWMutex.Lock()
-//}
-//
-//func (segbf *SegmentBuffer) WUnLock() {
-//	segbf.RWMutex.Unlock()
-//}
+func (segbf *SegmentBuffer) RLock() {
+	segbf.RWMutex.RLock()
+}
+
+func (segbf *SegmentBuffer) RUnLock() {
+	segbf.RWMutex.RUnlock()
+}
+
+func (segbf *SegmentBuffer) WLock() {
+	segbf.RWMutex.Lock()
+}
+
+func (segbf *SegmentBuffer) WUnLock() {
+	segbf.RWMutex.Unlock()
+}
 
 func (segbf *SegmentBuffer) GetStep() int {
 	return segbf.Step

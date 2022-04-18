@@ -194,10 +194,10 @@ func (uc *SegmentUsecase) loadNextSegmentFromDb(ctx context.Context, cacheSegmen
 		cacheSegmentBuffer.GetThreadRunning().Store(false)
 	}
 
-	cacheSegmentBuffer.RWMutex.Lock()
+	cacheSegmentBuffer.WLock()
+	defer cacheSegmentBuffer.WUnLock()
 	cacheSegmentBuffer.SetNextReady(true)
 	cacheSegmentBuffer.GetThreadRunning().Store(false)
-	cacheSegmentBuffer.RWMutex.Unlock()
 
 	return
 }
@@ -214,48 +214,66 @@ func waitAndSleep(segmentBuffer *model.SegmentBuffer) {
 }
 
 func (uc *SegmentUsecase) getIdFromSegmentBuffer(ctx context.Context, cacheSegmentBuffer *model.SegmentBuffer) (int64, error) {
+
+	var (
+		segment *model.Segment
+		value   int64
+		err     error
+	)
+
 	for {
-		cacheSegmentBuffer.RWMutex.RLock()
-		segment := cacheSegmentBuffer.GetCurrent()
-		if !cacheSegmentBuffer.IsNextReady() &&
-			(segment.GetIdle() < int64(0.9*float64(segment.GetStep()))) &&
-			cacheSegmentBuffer.GetThreadRunning().CAS(false, true) {
+		if value := func() int64 {
+			cacheSegmentBuffer.RLock()
+			defer cacheSegmentBuffer.RUnLock()
 
-			go uc.loadNextSegmentFromDb(context.TODO(), cacheSegmentBuffer)
-		}
+			segment = cacheSegmentBuffer.GetCurrent()
+			if !cacheSegmentBuffer.IsNextReady() &&
+				(segment.GetIdle() < int64(0.9*float64(segment.GetStep()))) &&
+				cacheSegmentBuffer.GetThreadRunning().CAS(false, true) {
 
-		value := segment.GetValue().Load()
-		segment.GetValue().Inc()
-		if value < segment.GetMax() { // 成功返回
-			cacheSegmentBuffer.RWMutex.RUnlock()
+				go uc.loadNextSegmentFromDb(context.TODO(), cacheSegmentBuffer)
+			}
+
+			value = segment.GetValue().Load()
+			segment.GetValue().Inc()
+			if value < segment.GetMax() { // 成功返回
+				return value
+			}
+			return 0
+		}(); value != 0 {
 			return value, nil
 		}
-		cacheSegmentBuffer.RWMutex.RUnlock()
 
 		// 等待协程异步准备号段完毕
 		waitAndSleep(cacheSegmentBuffer)
 
-		// 执行到这里，说明当前号段已经用完，应该切换另一个Segment号段使用
-		cacheSegmentBuffer.RWMutex.Lock()
-		// 重复获取value, 并发执行时，Segment可能已经被其他协程切换。再次判断, 防止重复切换Segment
-		segment = cacheSegmentBuffer.GetCurrent()
-		value = segment.GetValue().Load()
-		segment.GetValue().Inc()
-		if value < segment.GetMax() { // 成功返回
-			return value, nil
-		}
+		value, err = func() (int64, error) {
+			// 执行到这里，说明当前号段已经用完，应该切换另一个Segment号段使用
+			cacheSegmentBuffer.WLock()
+			defer cacheSegmentBuffer.WUnLock()
 
-		// 执行到这里, 说明其他的协程没有进行Segment切换，
-		// 并且当前号段所有号码用完，需要进行切换Segment
-		// 如果准备好另一个Segment，直接切换
-		if cacheSegmentBuffer.IsNextReady() {
-			cacheSegmentBuffer.SwitchPos()
-			cacheSegmentBuffer.SetNextReady(false)
-		} else { // 如果另一个Segment没有准备好，则返回异常双buffer全部用完
-			cacheSegmentBuffer.RWMutex.Unlock()
-			return 0, ErrIDTwoSegmentsAreNull
+			// 重复获取value, 并发执行时，Segment可能已经被其他协程切换。再次判断, 防止重复切换Segment
+			segment = cacheSegmentBuffer.GetCurrent()
+			value = segment.GetValue().Load()
+			segment.GetValue().Inc()
+			if value < segment.GetMax() { // 成功返回
+				return value, nil
+			}
+
+			// 执行到这里, 说明其他的协程没有进行Segment切换，
+			// 并且当前号段所有号码用完，需要进行切换Segment
+			// 如果准备好另一个Segment，直接切换
+			if cacheSegmentBuffer.IsNextReady() {
+				cacheSegmentBuffer.SwitchPos()
+				cacheSegmentBuffer.SetNextReady(false)
+			} else { // 如果另一个Segment没有准备好，则返回异常双buffer全部用完
+				return 0, ErrIDTwoSegmentsAreNull
+			}
+			return 0, nil
+		}()
+		if value != 0 || err != nil {
+			return value, err
 		}
-		cacheSegmentBuffer.RWMutex.Unlock()
 	}
 }
 

@@ -31,7 +31,7 @@ func (s *SegmentService) GenSegmentId(ctx context.Context, idRequest *v1.IDReque
 	id, err := s.segmentUc.GetID(ctx, idRequest.Tag)
 	if err != nil {
 		s.log.Error("get id error : ", err)
-		return nil, errors.Unwrap(err)
+		return &v1.IDReply{}, errors.Unwrap(err)
 	}
 
 	return &v1.IDReply{Id: strconv.FormatInt(id, 10)}, nil
