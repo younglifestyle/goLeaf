@@ -32,6 +32,53 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /monitor/cache:
+        get:
+            tags:
+                - Leaf
+            description: monitor
+            operationId: Leaf_GenSegmentCache
+            parameters:
+                - name: tag
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/SegmentBufferCacheViews'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /monitor/db:
+        get:
+            tags:
+                - Leaf
+            operationId: Leaf_GenSegmentDB
+            parameters:
+                - name: tag
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LeafAllocDbs'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
 components:
     schemas:
         GoogleProtobufAny:
@@ -48,6 +95,70 @@ components:
                 id:
                     type: string
             description: 申请到的ID
+        LeafAllocDb:
+            type: object
+            properties:
+                bizTag:
+                    type: string
+                maxId:
+                    type: integer
+                    format: int64
+                step:
+                    type: integer
+                    format: int32
+                description:
+                    type: string
+                updatedTime:
+                    type: integer
+                    format: int64
+                createdTime:
+                    type: integer
+                    format: int64
+        LeafAllocDbs:
+            type: object
+            properties:
+                leafAllocDbs:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/LeafAllocDb'
+        SegmentBufferCacheView:
+            type: object
+            properties:
+                key:
+                    type: string
+                value0:
+                    type: integer
+                    format: int64
+                step0:
+                    type: integer
+                    format: int32
+                max0:
+                    type: integer
+                    format: int64
+                value1:
+                    type: integer
+                    format: int64
+                step1:
+                    type: integer
+                    format: int32
+                max1:
+                    type: integer
+                    format: int64
+                pos:
+                    type: integer
+                    format: int32
+                nextReady:
+                    type: boolean
+                initOk:
+                    type: boolean
+            description: 字段模式在内存中的各项数据
+        SegmentBufferCacheViews:
+            type: object
+            properties:
+                segmentBufferCacheView:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/SegmentBufferCacheView'
         Status:
             type: object
             properties:

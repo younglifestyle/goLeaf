@@ -57,6 +57,33 @@ func NewSegmentUsecase(repo SegmentRepo, logger log.Logger) *SegmentUsecase {
 	return s
 }
 
+func (uc *SegmentUsecase) GetAllLeafs(ctx context.Context) ([]*model.LeafAlloc, error) {
+	return uc.repo.GetAllLeafAllocs(ctx)
+}
+
+func (uc *SegmentUsecase) Cache(ctx context.Context) ([]*model.SegmentBufferView, error) {
+	bufferViews := []*model.SegmentBufferView{}
+	uc.cache.Range(func(k, v interface{}) bool {
+		segBuff := v.(*model.SegmentBuffer)
+		bv := &model.SegmentBufferView{}
+		bv.InitOk = segBuff.IsInitOk()
+		bv.Key = segBuff.GetKey()
+		bv.Pos = segBuff.GetCurrentPos()
+		bv.NextReady = segBuff.IsNextReady()
+		segments := segBuff.GetSegments()
+		bv.Max0 = segments[0].GetMax()
+		bv.Value0 = segments[0].GetValue().Load()
+		bv.Step0 = segments[0].GetStep()
+		bv.Max1 = segments[1].GetMax()
+		bv.Value1 = segments[1].GetValue().Load()
+		bv.Step1 = segments[1].GetStep()
+		bufferViews = append(bufferViews, bv)
+		return true
+	})
+
+	return bufferViews, nil
+}
+
 // GetID creates a Segment, and returns the new Segment.
 func (uc *SegmentUsecase) GetID(ctx context.Context, tag string) (int64, error) {
 
