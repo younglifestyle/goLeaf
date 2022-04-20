@@ -79,8 +79,8 @@ func (s *SegmentService) GenSegmentDB(ctx context.Context, in *v1.IDRequest) (le
 		v.MaxId = leaf.MaxId
 		v.Step = int32(leaf.Step)
 		v.Description = leaf.Description
-		v.UpdatedTime = leaf.UpdatedAt
-		v.CreatedTime = leaf.CreatedAt
+		v.UpdatedTime = leaf.UpdatedAt.Unix()
+		v.CreatedTime = leaf.CreatedAt.Unix()
 		leafs.LeafAllocDbs = append(leafs.LeafAllocDbs, v)
 	}
 
