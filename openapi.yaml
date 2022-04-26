@@ -32,6 +32,54 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/snowflake/get:
+        get:
+            tags:
+                - Leaf
+            description: 雪花ID
+            operationId: Leaf_GenSnowflakeId
+            parameters:
+                - name: tag
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IDReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /decodeSnowflakeId:
+        get:
+            tags:
+                - Leaf
+            description: 解析雪花ID
+            operationId: Leaf_DecodeSnowflakeId
+            parameters:
+                - name: id
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DecodeSnowflakeIdResp'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /monitor/cache:
         get:
             tags:
@@ -81,6 +129,15 @@ paths:
                                 $ref: '#/components/schemas/Status'
 components:
     schemas:
+        DecodeSnowflakeIdResp:
+            type: object
+            properties:
+                workerId:
+                    type: string
+                sequenceId:
+                    type: string
+                timestamp:
+                    type: string
         GoogleProtobufAny:
             type: object
             properties:

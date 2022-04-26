@@ -84,7 +84,8 @@ func main() {
 		panic(err)
 	}
 
-	app, cleanup, err := wireApp(bc.Server, bc.Data,
+	app, cleanup, err := wireApp(&bc,
+		bc.Server, bc.Data,
 		metrics.Server(
 			metrics.WithSeconds(prom.NewHistogram(_metricSeconds)),
 			metrics.WithRequests(prom.NewCounter(_metricRequests)),

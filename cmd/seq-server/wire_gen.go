@@ -20,14 +20,15 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, middlewareMiddleware middleware.Middleware, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(bootstrap *conf.Bootstrap, confServer *conf.Server, confData *conf.Data, middlewareMiddleware middleware.Middleware, logger log.Logger) (*kratos.App, func(), error) {
 	db := data.NewGormClient(confData, logger)
-	dataData, cleanup, err := data.NewData(confData, db, logger)
+	client := data.NewEtcdClient(confData, logger)
+	dataData, cleanup, err := data.NewData(confData, db, client, logger)
 	if err != nil {
 		return nil, nil, err
 	}
 	segmentRepo := data.NewSegmentIDRepo(dataData, logger)
-	segmentUsecase := biz.NewSegmentUsecase(segmentRepo, logger)
+	segmentUsecase := biz.NewSegmentUsecase(segmentRepo, bootstrap, logger)
 	segmentService := service.NewSegmentService(segmentUsecase, logger)
 	httpServer := server.NewHTTPServer(confServer, segmentService, middlewareMiddleware, logger)
 	grpcServer := server.NewGRPCServer(confServer, segmentService, middlewareMiddleware, logger)

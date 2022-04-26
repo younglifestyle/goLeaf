@@ -18,9 +18,11 @@ var _ = binding.EncodeURL
 const _ = http.SupportPackageIsVersion1
 
 type LeafHTTPServer interface {
+	DecodeSnowflakeId(context.Context, *DecodeSnowflakeIdReq) (*DecodeSnowflakeIdResp, error)
 	GenSegmentCache(context.Context, *IDRequest) (*SegmentBufferCacheViews, error)
 	GenSegmentDB(context.Context, *IDRequest) (*LeafAllocDbs, error)
 	GenSegmentId(context.Context, *IDRequest) (*IDReply, error)
+	GenSnowflakeId(context.Context, *IDRequest) (*IDReply, error)
 }
 
 func RegisterLeafHTTPServer(s *http.Server, srv LeafHTTPServer) {
@@ -28,6 +30,8 @@ func RegisterLeafHTTPServer(s *http.Server, srv LeafHTTPServer) {
 	r.GET("/api/segment/get/{tag}", _Leaf_GenSegmentId0_HTTP_Handler(srv))
 	r.GET("/monitor/cache", _Leaf_GenSegmentCache0_HTTP_Handler(srv))
 	r.GET("/monitor/db", _Leaf_GenSegmentDB0_HTTP_Handler(srv))
+	r.GET("/api/snowflake/get", _Leaf_GenSnowflakeId0_HTTP_Handler(srv))
+	r.GET("/decodeSnowflakeId", _Leaf_DecodeSnowflakeId0_HTTP_Handler(srv))
 }
 
 func _Leaf_GenSegmentId0_HTTP_Handler(srv LeafHTTPServer) func(ctx http.Context) error {
@@ -90,10 +94,50 @@ func _Leaf_GenSegmentDB0_HTTP_Handler(srv LeafHTTPServer) func(ctx http.Context)
 	}
 }
 
+func _Leaf_GenSnowflakeId0_HTTP_Handler(srv LeafHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in IDRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, "/leafgrpc.v1.Leaf/GenSnowflakeId")
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GenSnowflakeId(ctx, req.(*IDRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*IDReply)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _Leaf_DecodeSnowflakeId0_HTTP_Handler(srv LeafHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in DecodeSnowflakeIdReq
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, "/leafgrpc.v1.Leaf/DecodeSnowflakeId")
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.DecodeSnowflakeId(ctx, req.(*DecodeSnowflakeIdReq))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*DecodeSnowflakeIdResp)
+		return ctx.Result(200, reply)
+	}
+}
+
 type LeafHTTPClient interface {
+	DecodeSnowflakeId(ctx context.Context, req *DecodeSnowflakeIdReq, opts ...http.CallOption) (rsp *DecodeSnowflakeIdResp, err error)
 	GenSegmentCache(ctx context.Context, req *IDRequest, opts ...http.CallOption) (rsp *SegmentBufferCacheViews, err error)
 	GenSegmentDB(ctx context.Context, req *IDRequest, opts ...http.CallOption) (rsp *LeafAllocDbs, err error)
 	GenSegmentId(ctx context.Context, req *IDRequest, opts ...http.CallOption) (rsp *IDReply, err error)
+	GenSnowflakeId(ctx context.Context, req *IDRequest, opts ...http.CallOption) (rsp *IDReply, err error)
 }
 
 type LeafHTTPClientImpl struct {
@@ -102,6 +146,19 @@ type LeafHTTPClientImpl struct {
 
 func NewLeafHTTPClient(client *http.Client) LeafHTTPClient {
 	return &LeafHTTPClientImpl{client}
+}
+
+func (c *LeafHTTPClientImpl) DecodeSnowflakeId(ctx context.Context, in *DecodeSnowflakeIdReq, opts ...http.CallOption) (*DecodeSnowflakeIdResp, error) {
+	var out DecodeSnowflakeIdResp
+	pattern := "/decodeSnowflakeId"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation("/leafgrpc.v1.Leaf/DecodeSnowflakeId"))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
 }
 
 func (c *LeafHTTPClientImpl) GenSegmentCache(ctx context.Context, in *IDRequest, opts ...http.CallOption) (*SegmentBufferCacheViews, error) {
@@ -135,6 +192,19 @@ func (c *LeafHTTPClientImpl) GenSegmentId(ctx context.Context, in *IDRequest, op
 	pattern := "/api/segment/get/{tag}"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation("/leafgrpc.v1.Leaf/GenSegmentId"))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
+}
+
+func (c *LeafHTTPClientImpl) GenSnowflakeId(ctx context.Context, in *IDRequest, opts ...http.CallOption) (*IDReply, error) {
+	var out IDReply
+	pattern := "/api/snowflake/get"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation("/leafgrpc.v1.Leaf/GenSnowflakeId"))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {

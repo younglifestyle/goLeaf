@@ -23,6 +23,7 @@ message Server {
   }
   HTTP http = 1;
   GRPC grpc = 2;
+  string server_name = 3;
 }
 
 message Data {
@@ -33,10 +34,12 @@ message Data {
     google.protobuf.Duration idle_timeout = 4;
     int32 open_conn = 5;
     string table_name = 6;
+    bool segment_enable = 7;
   }
   message Etcd {
     repeated string endpoints = 1;
     google.protobuf.Duration dial_timeout = 2;
+    bool snowflake_enable = 3;
   }
   Database database = 1;
   Etcd etcd = 2;

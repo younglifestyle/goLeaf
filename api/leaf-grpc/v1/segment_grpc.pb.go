@@ -27,6 +27,10 @@ type LeafClient interface {
 	// monitor
 	GenSegmentCache(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*SegmentBufferCacheViews, error)
 	GenSegmentDB(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*LeafAllocDbs, error)
+	// 雪花ID
+	GenSnowflakeId(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*IDReply, error)
+	// 解析雪花ID
+	DecodeSnowflakeId(ctx context.Context, in *DecodeSnowflakeIdReq, opts ...grpc.CallOption) (*DecodeSnowflakeIdResp, error)
 }
 
 type leafClient struct {
@@ -64,6 +68,24 @@ func (c *leafClient) GenSegmentDB(ctx context.Context, in *IDRequest, opts ...gr
 	return out, nil
 }
 
+func (c *leafClient) GenSnowflakeId(ctx context.Context, in *IDRequest, opts ...grpc.CallOption) (*IDReply, error) {
+	out := new(IDReply)
+	err := c.cc.Invoke(ctx, "/leafgrpc.v1.Leaf/GenSnowflakeId", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *leafClient) DecodeSnowflakeId(ctx context.Context, in *DecodeSnowflakeIdReq, opts ...grpc.CallOption) (*DecodeSnowflakeIdResp, error) {
+	out := new(DecodeSnowflakeIdResp)
+	err := c.cc.Invoke(ctx, "/leafgrpc.v1.Leaf/DecodeSnowflakeId", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LeafServer is the server API for Leaf service.
 // All implementations must embed UnimplementedLeafServer
 // for forward compatibility
@@ -73,6 +95,10 @@ type LeafServer interface {
 	// monitor
 	GenSegmentCache(context.Context, *IDRequest) (*SegmentBufferCacheViews, error)
 	GenSegmentDB(context.Context, *IDRequest) (*LeafAllocDbs, error)
+	// 雪花ID
+	GenSnowflakeId(context.Context, *IDRequest) (*IDReply, error)
+	// 解析雪花ID
+	DecodeSnowflakeId(context.Context, *DecodeSnowflakeIdReq) (*DecodeSnowflakeIdResp, error)
 	mustEmbedUnimplementedLeafServer()
 }
 
@@ -88,6 +114,12 @@ func (UnimplementedLeafServer) GenSegmentCache(context.Context, *IDRequest) (*Se
 }
 func (UnimplementedLeafServer) GenSegmentDB(context.Context, *IDRequest) (*LeafAllocDbs, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenSegmentDB not implemented")
+}
+func (UnimplementedLeafServer) GenSnowflakeId(context.Context, *IDRequest) (*IDReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenSnowflakeId not implemented")
+}
+func (UnimplementedLeafServer) DecodeSnowflakeId(context.Context, *DecodeSnowflakeIdReq) (*DecodeSnowflakeIdResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DecodeSnowflakeId not implemented")
 }
 func (UnimplementedLeafServer) mustEmbedUnimplementedLeafServer() {}
 
@@ -156,6 +188,42 @@ func _Leaf_GenSegmentDB_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Leaf_GenSnowflakeId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LeafServer).GenSnowflakeId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/leafgrpc.v1.Leaf/GenSnowflakeId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LeafServer).GenSnowflakeId(ctx, req.(*IDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Leaf_DecodeSnowflakeId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DecodeSnowflakeIdReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LeafServer).DecodeSnowflakeId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/leafgrpc.v1.Leaf/DecodeSnowflakeId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LeafServer).DecodeSnowflakeId(ctx, req.(*DecodeSnowflakeIdReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Leaf_ServiceDesc is the grpc.ServiceDesc for Leaf service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -174,6 +242,14 @@ var Leaf_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GenSegmentDB",
 			Handler:    _Leaf_GenSegmentDB_Handler,
+		},
+		{
+			MethodName: "GenSnowflakeId",
+			Handler:    _Leaf_GenSnowflakeId_Handler,
+		},
+		{
+			MethodName: "DecodeSnowflakeId",
+			Handler:    _Leaf_DecodeSnowflakeId_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

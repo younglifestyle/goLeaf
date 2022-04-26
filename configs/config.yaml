@@ -1,19 +1,21 @@
 server:
+  server_name: "leaf"
   http:
-    addr: 0.0.0.0:8000
+    addr: 0.0.0.0:8001
     timeout: 2s
   grpc:
-    addr: 0.0.0.0:9000
+    addr: 0.0.0.0:9001
     timeout: 2s
 data:
   database:
+    segment_enable: false
     table_name: "leaf_alloc"
     driver: mysql
     source: root:123@tcp(127.0.0.1:3306)/leaf?charset=utf8&parseTime=True&loc=Local
     open_conn: 50
     idle: 10
     idle_timeout: 14400s
-  redis:
-    addr: 127.0.0.1:6379
-    read_timeout: 0.2s
-    write_timeout: 0.2s
+  etcd:
+    snowflake_enable: true
+    endpoints: ["127.0.0.1:2379"]
+    dial_timeout: 2s
