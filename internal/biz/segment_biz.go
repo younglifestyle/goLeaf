@@ -109,7 +109,7 @@ func (uc *SegmentUsecase) GetID(ctx context.Context, tag string) (int64, error) 
 		}
 	}
 
-	return uc.getIdFromSegmentBuffer(context.TODO(), segmentBuffer)
+	return uc.getIdFromSegmentBuffer(ctx, segmentBuffer)
 }
 
 func (uc *SegmentUsecase) updateSegmentFromDb(ctx context.Context, bizTag string, segment *model.Segment) (err error) {
@@ -231,7 +231,8 @@ func (uc *SegmentUsecase) getIdFromSegmentBuffer(ctx context.Context, cacheSegme
 				(segment.GetIdle() < int64(0.9*float64(segment.GetStep()))) &&
 				cacheSegmentBuffer.GetThreadRunning().CAS(false, true) {
 
-				go uc.loadNextSegmentFromDb(ctx, cacheSegmentBuffer)
+				// 协程中传入空ctx，防止主体执行完成后其调用cancel取消上下文
+				go uc.loadNextSegmentFromDb(context.TODO(), cacheSegmentBuffer)
 			}
 
 			value = segment.GetValue().Load()
