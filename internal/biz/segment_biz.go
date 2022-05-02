@@ -75,6 +75,7 @@ type SegmentUsecase struct {
 	cache           sync.Map // k biz-tag : v model.SegmentBuffer
 
 	twepoch       int64
+	workerId      int64
 	sequence      int64
 	lastTimestamp int64
 
@@ -115,6 +116,11 @@ func NewSegmentUsecase(repo SegmentRepo, conf *conf.Bootstrap, logger log.Logger
 		s.SnowFlakeEtcdHolder.ListenAddress = s.SnowFlakeEtcdHolder.Ip + ":" + s.SnowFlakeEtcdHolder.Port
 		if !s.initSnowFlake() {
 			s.log.Fatal("Snowflake Service Init Fail")
+		} else {
+			s.workerId = int64(s.SnowFlakeEtcdHolder.WorkerId)
+		}
+		if !(s.workerId >= 0 && s.workerId <= int64(maxWorkerId)) {
+			panic("workerID must gte 0 and lte 1023")
 		}
 	}
 
@@ -217,7 +223,7 @@ func (uc *SegmentUsecase) GetSnowflakeID(ctx context.Context) (int64, error) {
 		uc.sequence = int64(rand.Intn(100))
 	}
 	uc.lastTimestamp = ts
-	id := ((ts - uc.twepoch) << timestampLeftShift) | (int64(uc.SnowFlakeEtcdHolder.WorkerId) << workerIdShift) | uc.sequence
+	id := ((ts - uc.twepoch) << timestampLeftShift) | (uc.workerId << workerIdShift) | uc.sequence
 
 	return id, nil
 }
@@ -597,7 +603,6 @@ func (uc *SegmentUsecase) checkInitTimeStamp(zkAddrNode string) bool {
 	if err != nil {
 		return false
 	}
-	uc.log.Info("checkInitTimeStamp : ", zkAddrNode, " ", getKey.Count)
 	endpoint := uc.deBuildData(getKey.Kvs[0].Value)
 	return !(endpoint.Timestamp > time.Now().UnixMilli())
 }
