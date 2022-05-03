@@ -78,6 +78,7 @@ type SegmentUsecase struct {
 	workerId      int64
 	sequence      int64
 	lastTimestamp int64
+	snowFlakeLock sync.Mutex
 
 	model.SnowFlakeEtcdHolder
 
@@ -191,6 +192,10 @@ func (uc *SegmentUsecase) GetSegID(ctx context.Context, tag string) (int64, erro
 
 // GetSnowflakeID creates a Snowflake ID  运行时，leaf允许最多5ms的回拨；重启时，允许最多3s的回拨
 func (uc *SegmentUsecase) GetSnowflakeID(ctx context.Context) (int64, error) {
+	// 多个共享变量会被并发访问，同一时间，应只让一个线程有资格访问数据
+	uc.snowFlakeLock.Lock()
+	defer uc.snowFlakeLock.Unlock()
+
 	var ts = time.Now().UnixMilli()
 
 	if ts > uc.lastTimestamp {
