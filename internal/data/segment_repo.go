@@ -9,12 +9,12 @@ import (
 	"seg-server/internal/biz/model"
 )
 
-type SegmentIdRepo struct {
+type IDGenRepoIml struct {
 	data *Data
 	log  *log.Helper
 }
 
-func (s *SegmentIdRepo) GetAllLeafAllocs(ctx context.Context) (leafs []*model.LeafAlloc, err error) {
+func (s *IDGenRepoIml) GetAllLeafAllocs(ctx context.Context) (leafs []*model.LeafAlloc, err error) {
 	if err = s.data.db.Table(s.data.tableName).
 		WithContext(ctx).Find(&leafs).Error; err != nil {
 
@@ -24,7 +24,7 @@ func (s *SegmentIdRepo) GetAllLeafAllocs(ctx context.Context) (leafs []*model.Le
 	return
 }
 
-func (s *SegmentIdRepo) GetLeafAlloc(ctx context.Context, tag string) (seg model.LeafAlloc, err error) {
+func (s *IDGenRepoIml) GetLeafAlloc(ctx context.Context, tag string) (seg model.LeafAlloc, err error) {
 	if err = s.data.db.Table(s.data.tableName).WithContext(ctx).Select("biz_tag",
 		"max_id", "step").Where("biz_tag = ?", tag).First(&seg).Error; err != nil {
 
@@ -34,7 +34,7 @@ func (s *SegmentIdRepo) GetLeafAlloc(ctx context.Context, tag string) (seg model
 	return
 }
 
-func (s *SegmentIdRepo) GetAllTags(ctx context.Context) (tags []string, err error) {
+func (s *IDGenRepoIml) GetAllTags(ctx context.Context) (tags []string, err error) {
 	if err = s.data.db.Table(s.data.tableName).WithContext(ctx).
 		Pluck("biz_tag", &tags).Error; err != nil {
 
@@ -44,7 +44,7 @@ func (s *SegmentIdRepo) GetAllTags(ctx context.Context) (tags []string, err erro
 	return
 }
 
-func (s *SegmentIdRepo) UpdateAndGetMaxId(ctx context.Context, tag string) (leafAlloc model.LeafAlloc, err error) {
+func (s *IDGenRepoIml) UpdateAndGetMaxId(ctx context.Context, tag string) (leafAlloc model.LeafAlloc, err error) {
 
 	// Begin
 	// UPDATE table SET max_id=max_id+step WHERE biz_tag=xxx
@@ -69,7 +69,7 @@ func (s *SegmentIdRepo) UpdateAndGetMaxId(ctx context.Context, tag string) (leaf
 	return
 }
 
-func (s *SegmentIdRepo) UpdateMaxIdByCustomStepAndGetLeafAlloc(ctx context.Context, tag string, step int) (leafAlloc model.LeafAlloc, err error) {
+func (s *IDGenRepoIml) UpdateMaxIdByCustomStepAndGetLeafAlloc(ctx context.Context, tag string, step int) (leafAlloc model.LeafAlloc, err error) {
 
 	err = s.data.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err = tx.Table(s.data.tableName).Where("biz_tag = ?", tag).
@@ -90,13 +90,13 @@ func (s *SegmentIdRepo) UpdateMaxIdByCustomStepAndGetLeafAlloc(ctx context.Conte
 	return
 }
 
-func (s *SegmentIdRepo) GetPrefixKey(ctx context.Context, prefix string) (*clientv3.GetResponse, error) {
+func (s *IDGenRepoIml) GetPrefixKey(ctx context.Context, prefix string) (*clientv3.GetResponse, error) {
 
 	return s.data.etcdCli.Get(ctx, prefix, clientv3.WithPrefix())
 }
 
 // CreateKey 事务乐观锁创建
-func (s *SegmentIdRepo) CreateKeyWithOptLock(ctx context.Context, key string, val string) bool {
+func (s *IDGenRepoIml) CreateKeyWithOptLock(ctx context.Context, key string, val string) bool {
 
 	txnResponse, err := s.data.etcdCli.Txn(ctx).
 		If(clientv3.Compare(clientv3.CreateRevision(key), "=", 0)).
@@ -107,7 +107,7 @@ func (s *SegmentIdRepo) CreateKeyWithOptLock(ctx context.Context, key string, va
 	return txnResponse.Succeeded
 }
 
-func (s *SegmentIdRepo) CreateOrUpdateKey(ctx context.Context, key string, val string) bool {
+func (s *IDGenRepoIml) CreateOrUpdateKey(ctx context.Context, key string, val string) bool {
 
 	_, err := s.data.etcdCli.Put(ctx, key, val)
 	if err != nil {
@@ -117,14 +117,14 @@ func (s *SegmentIdRepo) CreateOrUpdateKey(ctx context.Context, key string, val s
 	return true
 }
 
-func (s *SegmentIdRepo) GetKey(ctx context.Context, key string) (*clientv3.GetResponse, error) {
+func (s *IDGenRepoIml) GetKey(ctx context.Context, key string) (*clientv3.GetResponse, error) {
 
 	return s.data.etcdCli.Get(ctx, key)
 }
 
-// NewSegmentIDRepo .
-func NewSegmentIDRepo(data *Data, logger log.Logger) biz.SegmentRepo {
-	return &SegmentIdRepo{
+// NewIDGenRepo .
+func NewIDGenRepo(data *Data, logger log.Logger) biz.IDGenRepo {
+	return &IDGenRepoIml{
 		data: data,
 		log:  log.NewHelper(log.With(logger, "module", "leaf-grpc-repo/data")),
 	}

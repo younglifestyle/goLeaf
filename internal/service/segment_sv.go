@@ -14,21 +14,21 @@ import (
 type SegmentService struct {
 	v1.UnimplementedLeafServer
 
-	segmentUc *biz.SegmentUsecase
-	log       *log.Helper
+	idGenUc *biz.IDGenUsecase
+	log     *log.Helper
 }
 
 // NewSegmentService new a leaf-grpc service.
-func NewSegmentService(segmentUc *biz.SegmentUsecase, logger log.Logger) *SegmentService {
+func NewSegmentService(segmentUc *biz.IDGenUsecase, logger log.Logger) *SegmentService {
 	return &SegmentService{
-		segmentUc: segmentUc,
-		log:       log.NewHelper(log.With(logger, "module", "leaf-grpc/service")),
+		idGenUc: segmentUc,
+		log:     log.NewHelper(log.With(logger, "module", "leaf-grpc/service")),
 	}
 }
 
 func (s *SegmentService) GenSnowflakeId(ctx context.Context, in *v1.IDRequest) (idResp *v1.IDReply, err error) {
 
-	id, err := s.segmentUc.GetSnowflakeID(ctx)
+	id, err := s.idGenUc.GetSnowflakeID(ctx)
 	if err != nil {
 		s.log.Error("get id error : ", err)
 		return &v1.IDReply{}, errors.Unwrap(err)
@@ -62,7 +62,7 @@ func (s *SegmentService) DecodeSnowflakeId(ctx context.Context, in *v1.DecodeSno
 // GenSegmentId
 func (s *SegmentService) GenSegmentId(ctx context.Context, idRequest *v1.IDRequest) (*v1.IDReply, error) {
 
-	id, err := s.segmentUc.GetSegID(ctx, idRequest.Tag)
+	id, err := s.idGenUc.GetSegID(ctx, idRequest.Tag)
 	if err != nil {
 		s.log.Error("get id error : ", err)
 		return &v1.IDReply{}, errors.Unwrap(err)
@@ -75,7 +75,7 @@ func (s *SegmentService) GenSegmentCache(ctx context.Context,
 	idRequest *v1.IDRequest) (segbuffViews *v1.SegmentBufferCacheViews, err error) {
 	segbuffViews = &v1.SegmentBufferCacheViews{}
 
-	bufferViews, err := s.segmentUc.Cache(ctx)
+	bufferViews, err := s.idGenUc.Cache(ctx)
 	if err != nil {
 		s.log.Error("get segment cache error : ", err)
 		return
@@ -101,7 +101,7 @@ func (s *SegmentService) GenSegmentCache(ctx context.Context,
 func (s *SegmentService) GenSegmentDB(ctx context.Context, in *v1.IDRequest) (leafs *v1.LeafAllocDbs, err error) {
 	leafs = &v1.LeafAllocDbs{}
 
-	allLeafs, err := s.segmentUc.GetAllLeafs(ctx)
+	allLeafs, err := s.idGenUc.GetAllLeafs(ctx)
 	if err != nil {
 		s.log.Error("get segment db error : ", err)
 		return

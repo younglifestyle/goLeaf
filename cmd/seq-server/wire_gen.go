@@ -27,9 +27,9 @@ func wireApp(bootstrap *conf.Bootstrap, confServer *conf.Server, confData *conf.
 	if err != nil {
 		return nil, nil, err
 	}
-	segmentRepo := data.NewSegmentIDRepo(dataData, logger)
-	segmentUsecase := biz.NewSegmentUsecase(segmentRepo, bootstrap, logger)
-	segmentService := service.NewSegmentService(segmentUsecase, logger)
+	idGenRepo := data.NewIDGenRepo(dataData, logger)
+	idGenUsecase := biz.NewIDGenUsecase(idGenRepo, bootstrap, logger)
+	segmentService := service.NewSegmentService(idGenUsecase, logger)
 	httpServer := server.NewHTTPServer(confServer, segmentService, middlewareMiddleware, logger)
 	grpcServer := server.NewGRPCServer(confServer, segmentService, middlewareMiddleware, logger)
 	app := newApp(logger, httpServer, grpcServer)

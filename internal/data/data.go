@@ -11,7 +11,7 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewGormClient, NewEtcdClient, NewSegmentIDRepo)
+var ProviderSet = wire.NewSet(NewData, NewGormClient, NewEtcdClient, NewIDGenRepo)
 
 // Data .
 type Data struct {
@@ -51,7 +51,7 @@ func NewEtcdClient(c *conf.Data, logger log.Logger) (cli *clientv3.Client) {
 			DialTimeout: c.Etcd.DialTimeout.AsDuration(),
 		})
 		if err != nil {
-			l.Fatalf("failed opening connection to etcd : %s", err)
+			l.Errorf("failed opening connection to etcd : %s", err)
 		}
 	}
 
