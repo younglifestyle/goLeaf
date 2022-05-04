@@ -90,7 +90,7 @@ func initSnowflake(s *IDGenUsecase, conf *conf.Bootstrap) {
 	PropPath = filepath.Join(util.GetCurrentAbPath(), conf.Server.ServerName) +
 		"/leafconf/" + s.SnowFlakeEtcdHolder.Port + "/workerID.toml"
 	PathForever = PrefixEtcdPath + "/forever"
-	s.log.Info("config path : ", PropPath)
+	s.log.Info("workerID local cache file path : ", PropPath)
 
 	s.SnowFlakeEtcdHolder.ListenAddress = s.SnowFlakeEtcdHolder.Ip + ":" + s.SnowFlakeEtcdHolder.Port
 	if !s.initSnowflakeWorkId() {
