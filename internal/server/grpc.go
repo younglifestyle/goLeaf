@@ -11,7 +11,7 @@ import (
 )
 
 // NewGRPCServer new a gRPC server.
-func NewGRPCServer(c *conf.Server, segmentService *service.SegmentService, metricMidSrv middleware.Middleware, logger log.Logger) *grpc.Server {
+func NewGRPCServer(c *conf.Server, idGenService *service.IdGenService, metricMidSrv middleware.Middleware, logger log.Logger) *grpc.Server {
 	var opts = []grpc.ServerOption{
 		grpc.Middleware(
 			recovery.Recovery(),
@@ -28,6 +28,7 @@ func NewGRPCServer(c *conf.Server, segmentService *service.SegmentService, metri
 		opts = append(opts, grpc.Timeout(c.Grpc.Timeout.AsDuration()))
 	}
 	srv := grpc.NewServer(opts...)
-	v1.RegisterLeafServer(srv, segmentService)
+	v1.RegisterLeafSegmentServiceServer(srv, idGenService)
+	v1.RegisterLeafSnowflakeServiceServer(srv, idGenService)
 	return srv
 }

@@ -3,16 +3,15 @@
 
 openapi: 3.0.3
 info:
-    title: Leaf API
-    description: Leaf ID生成
+    title: ""
     version: 0.0.1
 paths:
     /api/segment/get/{tag}:
         get:
             tags:
-                - Leaf
+                - LeafSegmentService
             description: 号段模式
-            operationId: Leaf_GenSegmentId
+            operationId: LeafSegmentService_GenSegmentId
             parameters:
                 - name: tag
                   in: path
@@ -25,7 +24,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/IDReply'
+                                $ref: '#/components/schemas/IdReply'
                 default:
                     description: Default error response
                     content:
@@ -35,9 +34,9 @@ paths:
     /api/snowflake/get:
         get:
             tags:
-                - Leaf
+                - LeafSnowflakeService
             description: 雪花ID
-            operationId: Leaf_GenSnowflakeId
+            operationId: LeafSnowflakeService_GenSnowflakeId
             parameters:
                 - name: tag
                   in: query
@@ -49,7 +48,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/IDReply'
+                                $ref: '#/components/schemas/IdReply'
                 default:
                     description: Default error response
                     content:
@@ -59,9 +58,9 @@ paths:
     /decodeSnowflakeId:
         get:
             tags:
-                - Leaf
+                - LeafSnowflakeService
             description: 解析雪花ID
-            operationId: Leaf_DecodeSnowflakeId
+            operationId: LeafSnowflakeService_DecodeSnowflakeId
             parameters:
                 - name: id
                   in: query
@@ -83,9 +82,9 @@ paths:
     /monitor/cache:
         get:
             tags:
-                - Leaf
+                - LeafSegmentService
             description: monitor
-            operationId: Leaf_GenSegmentCache
+            operationId: LeafSegmentService_GenSegmentCache
             parameters:
                 - name: tag
                   in: query
@@ -107,8 +106,8 @@ paths:
     /monitor/db:
         get:
             tags:
-                - Leaf
-            operationId: Leaf_GenSegmentDB
+                - LeafSegmentService
+            operationId: LeafSegmentService_GenSegmentDb
             parameters:
                 - name: tag
                   in: query
@@ -146,7 +145,7 @@ components:
                     description: The type of the serialized message.
             additionalProperties: true
             description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
-        IDReply:
+        IdReply:
             type: object
             properties:
                 id:
@@ -233,4 +232,7 @@ components:
                     description: A list of messages that carry the error details.  There is a common set of message types for APIs to use.
             description: 'The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).'
 tags:
-    - name: Leaf
+    - name: LeafSegmentService
+      description: Leaf ID生成
+    - name: LeafSnowflakeService
+      description: Leaf ID生成

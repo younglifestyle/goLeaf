@@ -4,15 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cast"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"seg-server/internal/biz/model"
 	"seg-server/internal/conf"
-	"seg-server/internal/util"
+	"seg-server/internal/pkg/dir"
+	"seg-server/internal/pkg/ip"
+	mytime "seg-server/internal/pkg/time"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -30,8 +35,46 @@ var (
 	PathForever        = PrefixEtcdPath + "/forever" //保存所有数据持久的节点
 )
 
+// SnowflakeIdGenUsecase is a snowflake usecase.
+type SnowflakeIdGenUsecase struct {
+	repo SnowflakeIDGenRepo
+	conf *conf.Data
+
+	twepoch       int64
+	workerId      int64
+	sequence      int64
+	lastTimestamp int64
+	snowFlakeLock sync.Mutex
+
+	model.SnowFlakeEtcdHolder
+
+	log *log.Helper
+}
+
+// SnowflakeIDGenRepo Etcd operate sets
+type SnowflakeIDGenRepo interface {
+	GetPrefixKey(ctx context.Context, prefix string) (*clientv3.GetResponse, error)
+	CreateKeyWithOptLock(ctx context.Context, key string, val string) bool
+	CreateOrUpdateKey(ctx context.Context, key string, val string) bool
+	GetKey(ctx context.Context, key string) (*clientv3.GetResponse, error)
+}
+
+// NewSnowflakeIDGenUsecase new a snowflake usecase.
+func NewSnowflakeIDGenUsecase(repo SnowflakeIDGenRepo, conf *conf.Bootstrap, logger log.Logger) *SnowflakeIdGenUsecase {
+	s := &SnowflakeIdGenUsecase{
+		repo: repo,
+		conf: conf.Data,
+		log:  log.NewHelper(log.With(logger, "module", "leaf-grpc/snowflake"))}
+
+	if conf.Data.Etcd.SnowflakeEnable {
+		initSnowflake(s, conf)
+	}
+
+	return s
+}
+
 // GetSnowflakeID creates a Snowflake ID  运行时，leaf允许最多5ms的回拨；重启时，允许最多3s的回拨
-func (uc *IDGenUsecase) GetSnowflakeID(ctx context.Context) (int64, error) {
+func (uc *SnowflakeIdGenUsecase) GetSnowflakeID(ctx context.Context) (int64, error) {
 	if uc.conf.Etcd.SnowflakeEnable {
 		// 多个共享变量会被并发访问，同一时间，应只让一个线程有资格访问数据
 		uc.snowFlakeLock.Lock()
@@ -63,7 +106,7 @@ func (uc *IDGenUsecase) GetSnowflakeID(ctx context.Context) (int64, error) {
 				// 对seq做随机作为起始
 				uc.sequence = int64(rand.Intn(100))
 				// 生成比lastTimestamp滞后的时间戳，这里不进行wait，因为很快就能获得滞后的毫秒数
-				ts = util.UtilNextMillis(uc.lastTimestamp)
+				ts = mytime.UtilNextMillis(uc.lastTimestamp)
 			}
 		} else {
 			uc.sequence = int64(rand.Intn(100))
@@ -77,17 +120,17 @@ func (uc *IDGenUsecase) GetSnowflakeID(ctx context.Context) (int64, error) {
 	}
 }
 
-func initSnowflake(s *IDGenUsecase, conf *conf.Bootstrap) {
+func initSnowflake(s *SnowflakeIdGenUsecase, conf *conf.Bootstrap) {
 	s.twepoch = twepoch
 	if !(time.Now().UnixMilli() > twepoch) {
 		panic("Snowflake not support twepoch gt currentTime")
 	}
 
-	s.SnowFlakeEtcdHolder.Ip = util.GetOutboundIP()
+	s.SnowFlakeEtcdHolder.Ip = ip.GetOutboundIP()
 	s.SnowFlakeEtcdHolder.Port = strings.Split(conf.Server.Http.Addr, ":")[1]
 
 	PrefixEtcdPath = "/snowflake/" + conf.Server.ServerName
-	PropPath = filepath.Join(util.GetCurrentAbPath(), conf.Server.ServerName) +
+	PropPath = filepath.Join(dir.GetCurrentAbPath(), conf.Server.ServerName) +
 		"/leafconf/" + s.SnowFlakeEtcdHolder.Port + "/workerID.toml"
 	PathForever = PrefixEtcdPath + "/forever"
 	s.log.Info("workerID local cache file path : ", PropPath)
@@ -104,7 +147,7 @@ func initSnowflake(s *IDGenUsecase, conf *conf.Bootstrap) {
 	}
 }
 
-func (uc *IDGenUsecase) initSnowflakeWorkId() bool {
+func (uc *SnowflakeIdGenUsecase) initSnowflakeWorkId() bool {
 	var retryCount = 0
 RETRY:
 	prefixKeyResps, err := uc.repo.GetPrefixKey(newTimeoutCtx(time.Second*2), PathForever)
@@ -195,7 +238,7 @@ RETRY:
 	return true
 }
 
-func (uc *IDGenUsecase) updateLocalWorkerID(workId int) {
+func (uc *SnowflakeIdGenUsecase) updateLocalWorkerID(workId int) {
 	if _, err := os.Stat(PropPath); err != nil {
 		os.MkdirAll(filepath.Dir(PropPath), os.ModePerm)
 	}
@@ -208,7 +251,7 @@ func (uc *IDGenUsecase) updateLocalWorkerID(workId int) {
 	return
 }
 
-func (uc *IDGenUsecase) scheduledUploadData(zkAddrNode string) {
+func (uc *SnowflakeIdGenUsecase) scheduledUploadData(zkAddrNode string) {
 	ticker := time.NewTicker(3 * time.Second)
 	for {
 		select {
@@ -218,7 +261,7 @@ func (uc *IDGenUsecase) scheduledUploadData(zkAddrNode string) {
 	}
 }
 
-func (uc *IDGenUsecase) updateNewData(path string) {
+func (uc *SnowflakeIdGenUsecase) updateNewData(path string) {
 	if time.Now().UnixMilli() < uc.SnowFlakeEtcdHolder.LastUpdateTime {
 		return
 	}
@@ -230,7 +273,7 @@ func (uc *IDGenUsecase) updateNewData(path string) {
 	return
 }
 
-func (uc *IDGenUsecase) buildData() []byte {
+func (uc *SnowflakeIdGenUsecase) buildData() []byte {
 	endPoint := new(model.Endpoint)
 	endPoint.IP = uc.SnowFlakeEtcdHolder.Ip
 	endPoint.Port = uc.SnowFlakeEtcdHolder.Port
@@ -239,13 +282,13 @@ func (uc *IDGenUsecase) buildData() []byte {
 	return encodeArr
 }
 
-func (uc *IDGenUsecase) deBuildData(val []byte) *model.Endpoint {
+func (uc *SnowflakeIdGenUsecase) deBuildData(val []byte) *model.Endpoint {
 	endPoint := new(model.Endpoint)
 	_ = json.Unmarshal(val, endPoint)
 	return endPoint
 }
 
-func (uc *IDGenUsecase) checkInitTimeStamp(zkAddrNode string) bool {
+func (uc *SnowflakeIdGenUsecase) checkInitTimeStamp(zkAddrNode string) bool {
 	getKey, err := uc.repo.GetKey(context.TODO(), zkAddrNode)
 	if err != nil {
 		return false

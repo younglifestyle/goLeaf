@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
-	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.uber.org/atomic"
 	"golang.org/x/sync/singleflight"
 	v1 "seg-server/api/leaf-grpc/v1"
@@ -30,23 +29,18 @@ const (
 	MaxStep         = 1000000
 )
 
-// IDGenRepo DB and Etcd operate sets
-type IDGenRepo interface {
+// SegmentIDGenRepo DB and Etcd operate sets
+type SegmentIDGenRepo interface {
 	UpdateAndGetMaxId(ctx context.Context, tag string) (seg model.LeafAlloc, err error)
 	GetLeafAlloc(ctx context.Context, tag string) (seg model.LeafAlloc, err error)
 	GetAllTags(ctx context.Context) (tags []string, err error)
 	GetAllLeafAllocs(ctx context.Context) (leafs []*model.LeafAlloc, err error)
 	UpdateMaxIdByCustomStepAndGetLeafAlloc(ctx context.Context, tag string, step int) (leafAlloc model.LeafAlloc, err error)
-
-	GetPrefixKey(ctx context.Context, prefix string) (*clientv3.GetResponse, error)
-	CreateKeyWithOptLock(ctx context.Context, key string, val string) bool
-	CreateOrUpdateKey(ctx context.Context, key string, val string) bool
-	GetKey(ctx context.Context, key string) (*clientv3.GetResponse, error)
 }
 
-// IDGenUsecase is a Segment usecase.
-type IDGenUsecase struct {
-	repo            IDGenRepo
+// SegmentIdGenUsecase is a Segment usecase.
+type SegmentIdGenUsecase struct {
+	repo            SegmentIDGenRepo
 	conf            *conf.Data
 	singleGroup     singleflight.Group
 	segmentDuration int64    // 号段消耗时间
@@ -63,12 +57,12 @@ type IDGenUsecase struct {
 	log *log.Helper
 }
 
-// NewIDGenUsecase new a Segment usecase.
-func NewIDGenUsecase(repo IDGenRepo, conf *conf.Bootstrap, logger log.Logger) *IDGenUsecase {
-	s := &IDGenUsecase{
+// NewSegmentIdGenUsecase new a Segment usecase.
+func NewSegmentIdGenUsecase(repo SegmentIDGenRepo, conf *conf.Bootstrap, logger log.Logger) *SegmentIdGenUsecase {
+	s := &SegmentIdGenUsecase{
 		repo: repo,
 		conf: conf.Data,
-		log:  log.NewHelper(log.With(logger, "module", "leaf-grpc/biz"))}
+		log:  log.NewHelper(log.With(logger, "module", "leaf-grpc/segment"))}
 
 	// 号段模式启用时，启动
 	if conf.Data.Database.SegmentEnable {
@@ -76,14 +70,10 @@ func NewIDGenUsecase(repo IDGenRepo, conf *conf.Bootstrap, logger log.Logger) *I
 		go s.loadProc()
 	}
 
-	if conf.Data.Etcd.SnowflakeEnable {
-		initSnowflake(s, conf)
-	}
-
 	return s
 }
 
-func (uc *IDGenUsecase) GetAllLeafs(ctx context.Context) ([]*model.LeafAlloc, error) {
+func (uc *SegmentIdGenUsecase) GetAllLeafs(ctx context.Context) ([]*model.LeafAlloc, error) {
 	if uc.conf.Database.SegmentEnable {
 		return uc.repo.GetAllLeafAllocs(ctx)
 	} else {
@@ -91,7 +81,7 @@ func (uc *IDGenUsecase) GetAllLeafs(ctx context.Context) ([]*model.LeafAlloc, er
 	}
 }
 
-func (uc *IDGenUsecase) Cache(ctx context.Context) ([]*model.SegmentBufferView, error) {
+func (uc *SegmentIdGenUsecase) Cache(ctx context.Context) ([]*model.SegmentBufferView, error) {
 	bufferViews := []*model.SegmentBufferView{}
 	uc.cache.Range(func(k, v interface{}) bool {
 		segBuff := v.(*model.SegmentBuffer)
@@ -115,7 +105,7 @@ func (uc *IDGenUsecase) Cache(ctx context.Context) ([]*model.SegmentBufferView, 
 }
 
 // GetSegID creates a Segment, and returns the new Segment.
-func (uc *IDGenUsecase) GetSegID(ctx context.Context, tag string) (int64, error) {
+func (uc *SegmentIdGenUsecase) GetSegID(ctx context.Context, tag string) (int64, error) {
 	if uc.conf.Database.SegmentEnable {
 		value, ok := uc.cache.Load(tag)
 		if !ok {
@@ -146,7 +136,7 @@ func (uc *IDGenUsecase) GetSegID(ctx context.Context, tag string) (int64, error)
 	}
 }
 
-func (uc *IDGenUsecase) updateSegmentFromDb(ctx context.Context, bizTag string, segment *model.Segment) (err error) {
+func (uc *SegmentIdGenUsecase) updateSegmentFromDb(ctx context.Context, bizTag string, segment *model.Segment) (err error) {
 
 	var leafAlloc model.LeafAlloc
 
@@ -220,7 +210,7 @@ func (uc *IDGenUsecase) updateSegmentFromDb(ctx context.Context, bizTag string, 
 	return
 }
 
-func (uc *IDGenUsecase) loadNextSegmentFromDb(ctx context.Context, cacheSegmentBuffer *model.SegmentBuffer) {
+func (uc *SegmentIdGenUsecase) loadNextSegmentFromDb(ctx context.Context, cacheSegmentBuffer *model.SegmentBuffer) {
 	segment := cacheSegmentBuffer.GetSegments()[cacheSegmentBuffer.NextPos()]
 	err := uc.updateSegmentFromDb(ctx, cacheSegmentBuffer.GetKey(), segment)
 	if err != nil {
@@ -247,7 +237,7 @@ func waitAndSleep(segmentBuffer *model.SegmentBuffer) {
 	}
 }
 
-func (uc *IDGenUsecase) getIdFromSegmentBuffer(ctx context.Context, cacheSegmentBuffer *model.SegmentBuffer) (int64, error) {
+func (uc *SegmentIdGenUsecase) getIdFromSegmentBuffer(ctx context.Context, cacheSegmentBuffer *model.SegmentBuffer) (int64, error) {
 
 	var (
 		segment *model.Segment
@@ -313,7 +303,7 @@ func (uc *IDGenUsecase) getIdFromSegmentBuffer(ctx context.Context, cacheSegment
 }
 
 // loadProc 定时1min同步一次db和cache
-func (uc *IDGenUsecase) loadProc() {
+func (uc *SegmentIdGenUsecase) loadProc() {
 	ticker := time.NewTicker(time.Minute)
 
 	for {
@@ -324,7 +314,7 @@ func (uc *IDGenUsecase) loadProc() {
 	}
 }
 
-func (uc *IDGenUsecase) loadSeqs() (err error) {
+func (uc *SegmentIdGenUsecase) loadSeqs() (err error) {
 
 	bizTags, err := uc.repo.GetAllTags(context.TODO())
 	if err != nil {

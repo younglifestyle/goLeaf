@@ -12,7 +12,7 @@ import (
 )
 
 // NewHTTPServer new a HTTP server.
-func NewHTTPServer(c *conf.Server, segmentService *service.SegmentService, metricMidSrv middleware.Middleware, logger log.Logger) *http.Server {
+func NewHTTPServer(c *conf.Server, idGenService *service.IdGenService, metricMidSrv middleware.Middleware, logger log.Logger) *http.Server {
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
@@ -30,6 +30,7 @@ func NewHTTPServer(c *conf.Server, segmentService *service.SegmentService, metri
 	}
 	srv := http.NewServer(opts...)
 	srv.Handle("/metrics", promhttp.Handler())
-	v1.RegisterLeafHTTPServer(srv, segmentService)
+	v1.RegisterLeafSegmentServiceHTTPServer(srv, idGenService)
+	v1.RegisterLeafSnowflakeServiceHTTPServer(srv, idGenService)
 	return srv
 }

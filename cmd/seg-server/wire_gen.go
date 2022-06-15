@@ -27,11 +27,13 @@ func wireApp(bootstrap *conf.Bootstrap, confServer *conf.Server, confData *conf.
 	if err != nil {
 		return nil, nil, err
 	}
-	idGenRepo := data.NewIDGenRepo(dataData, logger)
-	idGenUsecase := biz.NewIDGenUsecase(idGenRepo, bootstrap, logger)
-	segmentService := service.NewSegmentService(idGenUsecase, logger)
-	httpServer := server.NewHTTPServer(confServer, segmentService, middlewareMiddleware, logger)
-	grpcServer := server.NewGRPCServer(confServer, segmentService, middlewareMiddleware, logger)
+	segmentIDGenRepo := data.NewSegmentIdGenRepo(dataData, logger)
+	segmentIdGenUsecase := biz.NewSegmentIdGenUsecase(segmentIDGenRepo, bootstrap, logger)
+	snowflakeIDGenRepo := data.NewSnowflakeRepo(dataData, logger)
+	snowflakeIdGenUsecase := biz.NewSnowflakeIDGenUsecase(snowflakeIDGenRepo, bootstrap, logger)
+	idGenService := service.NewIdGenService(segmentIdGenUsecase, snowflakeIdGenUsecase, logger)
+	httpServer := server.NewHTTPServer(confServer, idGenService, middlewareMiddleware, logger)
+	grpcServer := server.NewGRPCServer(confServer, idGenService, middlewareMiddleware, logger)
 	app := newApp(logger, httpServer, grpcServer)
 	return app, func() {
 		cleanup()

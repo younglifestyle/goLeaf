@@ -6,38 +6,41 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	v1 "seg-server/api/leaf-grpc/v1"
 	"seg-server/internal/biz"
-	"seg-server/internal/util"
+	"seg-server/internal/pkg/time"
 	"strconv"
 )
 
-// SegmentService is a greeter service.
-type SegmentService struct {
-	v1.UnimplementedLeafServer
+// IdGenService is a greeter service.
+type IdGenService struct {
+	v1.UnimplementedLeafSegmentServiceServer
+	v1.UnimplementedLeafSnowflakeServiceServer
 
-	idGenUc *biz.IDGenUsecase
-	log     *log.Helper
+	segmentIdGenUsecase   *biz.SegmentIdGenUsecase
+	snowflakeIdGenUsecase *biz.SnowflakeIdGenUsecase
+	log                   *log.Helper
 }
 
-// NewSegmentService new a leaf-grpc service.
-func NewSegmentService(segmentUc *biz.IDGenUsecase, logger log.Logger) *SegmentService {
-	return &SegmentService{
-		idGenUc: segmentUc,
-		log:     log.NewHelper(log.With(logger, "module", "leaf-grpc/service")),
+// NewIdGenService new a leaf-grpc service.
+func NewIdGenService(segmentIdGenUsecase *biz.SegmentIdGenUsecase, snowflakeIdGenUsecase *biz.SnowflakeIdGenUsecase, logger log.Logger) *IdGenService {
+	return &IdGenService{
+		segmentIdGenUsecase:   segmentIdGenUsecase,
+		snowflakeIdGenUsecase: snowflakeIdGenUsecase,
+		log:                   log.NewHelper(log.With(logger, "module", "leaf-grpc/service")),
 	}
 }
 
-func (s *SegmentService) GenSnowflakeId(ctx context.Context, in *v1.IDRequest) (idResp *v1.IDReply, err error) {
+func (s *IdGenService) GenSnowflakeId(ctx context.Context, in *v1.IdRequest) (idResp *v1.IdReply, err error) {
 
-	id, err := s.idGenUc.GetSnowflakeID(ctx)
+	id, err := s.snowflakeIdGenUsecase.GetSnowflakeID(ctx)
 	if err != nil {
 		s.log.Error("get id error : ", err)
-		return &v1.IDReply{}, errors.Unwrap(err)
+		return &v1.IdReply{}, errors.Unwrap(err)
 	}
 
-	return &v1.IDReply{Id: strconv.FormatInt(id, 10)}, nil
+	return &v1.IdReply{Id: strconv.FormatInt(id, 10)}, nil
 }
 
-func (s *SegmentService) DecodeSnowflakeId(ctx context.Context, in *v1.DecodeSnowflakeIdReq) (snowflakeIdResp *v1.DecodeSnowflakeIdResp, err error) {
+func (s *IdGenService) DecodeSnowflakeId(ctx context.Context, in *v1.DecodeSnowflakeIdReq) (snowflakeIdResp *v1.DecodeSnowflakeIdResp, err error) {
 
 	snowflakeId, err := strconv.ParseInt(in.Id, 10, 64)
 	if err != nil {
@@ -47,7 +50,7 @@ func (s *SegmentService) DecodeSnowflakeId(ctx context.Context, in *v1.DecodeSno
 
 	snowflakeIdResp = &v1.DecodeSnowflakeIdResp{}
 	originTimestamp := (snowflakeId >> 22) + 1288834974657
-	timeStr := util.GetDateTimeStr(util.UnixToMS(originTimestamp))
+	timeStr := time.GetDateTimeStr(time.UnixToMS(originTimestamp))
 	snowflakeIdResp.Timestamp = strconv.FormatInt(originTimestamp, 10) + "(" + timeStr + ")"
 
 	workerId := (snowflakeId >> 12) ^ (snowflakeId >> 22 << 10)
@@ -60,22 +63,22 @@ func (s *SegmentService) DecodeSnowflakeId(ctx context.Context, in *v1.DecodeSno
 }
 
 // GenSegmentId
-func (s *SegmentService) GenSegmentId(ctx context.Context, idRequest *v1.IDRequest) (*v1.IDReply, error) {
+func (s *IdGenService) GenSegmentId(ctx context.Context, idRequest *v1.IdRequest) (*v1.IdReply, error) {
 
-	id, err := s.idGenUc.GetSegID(ctx, idRequest.Tag)
+	id, err := s.segmentIdGenUsecase.GetSegID(ctx, idRequest.Tag)
 	if err != nil {
 		s.log.Error("get id error : ", err)
-		return &v1.IDReply{}, errors.Unwrap(err)
+		return &v1.IdReply{}, errors.Unwrap(err)
 	}
 
-	return &v1.IDReply{Id: strconv.FormatInt(id, 10)}, nil
+	return &v1.IdReply{Id: strconv.FormatInt(id, 10)}, nil
 }
 
-func (s *SegmentService) GenSegmentCache(ctx context.Context,
-	idRequest *v1.IDRequest) (segbuffViews *v1.SegmentBufferCacheViews, err error) {
+func (s *IdGenService) GenSegmentCache(ctx context.Context,
+	idRequest *v1.IdRequest) (segbuffViews *v1.SegmentBufferCacheViews, err error) {
 	segbuffViews = &v1.SegmentBufferCacheViews{}
 
-	bufferViews, err := s.idGenUc.Cache(ctx)
+	bufferViews, err := s.segmentIdGenUsecase.Cache(ctx)
 	if err != nil {
 		s.log.Error("get segment cache error : ", err)
 		return
@@ -98,10 +101,10 @@ func (s *SegmentService) GenSegmentCache(ctx context.Context,
 	return
 }
 
-func (s *SegmentService) GenSegmentDB(ctx context.Context, in *v1.IDRequest) (leafs *v1.LeafAllocDbs, err error) {
+func (s *IdGenService) GenSegmentDB(ctx context.Context, in *v1.IdRequest) (leafs *v1.LeafAllocDbs, err error) {
 	leafs = &v1.LeafAllocDbs{}
 
-	allLeafs, err := s.idGenUc.GetAllLeafs(ctx)
+	allLeafs, err := s.segmentIdGenUsecase.GetAllLeafs(ctx)
 	if err != nil {
 		s.log.Error("get segment db error : ", err)
 		return

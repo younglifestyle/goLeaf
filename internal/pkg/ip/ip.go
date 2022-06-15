@@ -1,4 +1,4 @@
-package util
+package ip
 
 import (
 	"github.com/go-kratos/kratos/v2/log"

@@ -11,7 +11,7 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewGormClient, NewEtcdClient, NewIDGenRepo)
+var ProviderSet = wire.NewSet(NewData, NewGormClient, NewEtcdClient, NewSegmentIdGenRepo, NewSnowflakeRepo)
 
 // Data .
 type Data struct {
@@ -23,7 +23,7 @@ type Data struct {
 
 // NewData .
 func NewData(conf *conf.Data, db *gorm.DB, cli *clientv3.Client, logger log.Logger) (*Data, func(), error) {
-	l := log.NewHelper(log.With(logger, "module", "leaf-grpc/data"))
+	l := log.NewHelper(log.With(logger, "module", "leaf-grpc-repo/data"))
 
 	cleanup := func() {
 		l.Info("closing the data resources")
@@ -44,7 +44,7 @@ func NewData(conf *conf.Data, db *gorm.DB, cli *clientv3.Client, logger log.Logg
 func NewEtcdClient(c *conf.Data, logger log.Logger) (cli *clientv3.Client) {
 	if c.Etcd.SnowflakeEnable {
 		var err error
-		l := log.NewHelper(log.With(logger, "module", "redis/data/logger-job"))
+		l := log.NewHelper(log.With(logger, "module", "leaf-grpc-repo/etcd_cli"))
 
 		cli, err = clientv3.New(clientv3.Config{
 			Endpoints:   c.Etcd.Endpoints,
@@ -62,7 +62,7 @@ func NewEtcdClient(c *conf.Data, logger log.Logger) (cli *clientv3.Client) {
 func NewGormClient(c *conf.Data, logger log.Logger) (db *gorm.DB) {
 	if c.Database.SegmentEnable {
 		var err error
-		l := log.NewHelper(log.With(logger, "module", "gorm/data"))
+		l := log.NewHelper(log.With(logger, "module", "leaf-grpc-repo/gorm"))
 
 		// 参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name 获取详情
 		db, err = gorm.Open(mysql.Open(c.Database.Source), &gorm.Config{
