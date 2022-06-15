@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package leafgrpc.v1;
+
+import "google/api/annotations.proto";
+import "leaf-grpc/v1/segment.proto";
+
+option go_package = "seq-server/api/leaf-grpc/v1;v1";
+
+// Leaf ID生成
+service LeafSnowflakeService {
+    // 雪花ID
+    rpc GenSnowflakeId (IdRequest) returns (IdReply) {
+        option (google.api.http) = {
+            get: "/api/snowflake/get"
+        };
+    }
+    // 解析雪花ID
+    rpc DecodeSnowflakeId (DecodeSnowflakeIdReq) returns (DecodeSnowflakeIdResp) {
+        option (google.api.http) = {
+            get: "/decodeSnowflakeId"
+        };
+    }
+}
+
+message DecodeSnowflakeIdReq {
+    string id = 1;
+}
+
+message DecodeSnowflakeIdResp {
+    string worker_id = 1;
+    string sequence_id = 2;
+    string timestamp = 3;
+}
