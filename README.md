@@ -1,4 +1,5 @@
 ## 介绍
+
 Go实现的号段模式以及雪花（Snowflake）发号器，基于Kratos框架，适用于此微服务框架以及服务发现服务
 
 gRPC访问性能与Leaf同
@@ -8,6 +9,7 @@ gRPC访问性能与Leaf同
 ### 号段模式
 
 - 创建表
+
 ```mysql
 CREATE DATABASE leaf;
 CREATE TABLE `leaf_alloc` (
@@ -37,14 +39,15 @@ data:
     idle_timeout: 14400s
 ```
 
-
 - 启动服务
+
 ```
 make build
 bin/seq-server -conf configs/config.yaml
 ```
 
 - 请求接口
+
 ```
 curl http://localhost:8000/api/segment/get/leaf-segment-test
 
@@ -75,4 +78,4 @@ curl http://localhost:8000/api/snowflake/get
 http://localhost:8000/decodeSnowflakeId
 ```
 
-### 
+###

@@ -61,7 +61,7 @@ func (segbf *SegmentBuffer) GetCurrentPos() int {
 }
 
 func (segbf *SegmentBuffer) NextPos() int {
-	return (segbf.CurrentPos + 1) % 2
+	return (segbf.CurrentPos + 1) & 1 // X % 2
 }
 
 func (segbf *SegmentBuffer) SwitchPos() {
