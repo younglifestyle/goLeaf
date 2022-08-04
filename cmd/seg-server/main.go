@@ -2,8 +2,11 @@ package main
 
 import (
 	"flag"
+	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2/middleware/metrics"
 	"github.com/prometheus/client_golang/prometheus"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"net"
 	"os"
 
 	prom "github.com/go-kratos/kratos/contrib/metrics/prometheus/v2"
@@ -45,7 +48,7 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
-func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
+func newApp(logger log.Logger, c *conf.Data, cli *clientv3.Client, hs *http.Server, gs *grpc.Server) *kratos.App {
 	return kratos.New(
 		kratos.Name(Name),
 		kratos.Version(Version),
@@ -54,6 +57,14 @@ func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
 			hs,
 			gs,
 		),
+		func() kratos.Option {
+			if c.Etcd.DiscoveryEnable {
+				return kratos.Registrar(etcd.New(cli))
+			} else {
+				return kratos.Name(Name) // 占位
+			}
+		}(),
+		kratos.Metadata(map[string]string{"mac": ""}),
 	)
 }
 
@@ -100,4 +111,16 @@ func main() {
 	if err := app.Run(); err != nil {
 		panic(err)
 	}
+}
+
+func GetLocalMac() (mac string) {
+	// 获取本机的MAC地址
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		panic("Poor soul, here is what you got: " + err.Error())
+	}
+	for _, inter := range interfaces {
+		mac = string(inter.HardwareAddr) //获取本机MAC地址
+	}
+	return mac
 }

@@ -21,8 +21,8 @@ import (
 
 // wireApp init kratos application.
 func wireApp(bootstrap *conf.Bootstrap, confServer *conf.Server, confData *conf.Data, middlewareMiddleware middleware.Middleware, logger log.Logger) (*kratos.App, func(), error) {
-	db := data.NewGormClient(confData, logger)
 	client := data.NewEtcdClient(confData, logger)
+	db := data.NewGormClient(confData, logger)
 	dataData, cleanup, err := data.NewData(confData, db, client, logger)
 	if err != nil {
 		return nil, nil, err
@@ -30,11 +30,11 @@ func wireApp(bootstrap *conf.Bootstrap, confServer *conf.Server, confData *conf.
 	segmentIDGenRepo := data.NewSegmentIdGenRepo(dataData, logger)
 	segmentIdGenUsecase := biz.NewSegmentIdGenUsecase(segmentIDGenRepo, bootstrap, logger)
 	snowflakeIDGenRepo := data.NewSnowflakeRepo(dataData, logger)
-	snowflakeIdGenUsecase := biz.NewSnowflakeIDGenUsecase(snowflakeIDGenRepo, bootstrap, logger)
+	snowflakeIdGenUsecase := biz.NewSnowflakeIDGenUsecase(snowflakeIDGenRepo, client, bootstrap, logger)
 	idGenService := service.NewIdGenService(segmentIdGenUsecase, snowflakeIdGenUsecase, logger)
 	httpServer := server.NewHTTPServer(confServer, idGenService, middlewareMiddleware, logger)
 	grpcServer := server.NewGRPCServer(confServer, idGenService, middlewareMiddleware, logger)
-	app := newApp(logger, httpServer, grpcServer)
+	app := newApp(logger, confData, client, httpServer, grpcServer)
 	return app, func() {
 		cleanup()
 	}, nil

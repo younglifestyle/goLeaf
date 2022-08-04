@@ -40,6 +40,8 @@ message Data {
     repeated string endpoints = 1;
     google.protobuf.Duration dial_timeout = 2;
     bool snowflake_enable = 3;
+    bool discovery_enable = 4;
+    float time_deviation = 5;
   }
   Database database = 1;
   Etcd etcd = 2;

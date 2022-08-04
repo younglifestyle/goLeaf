@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
 	"seg-server/internal/biz"
 )
 
@@ -27,6 +28,21 @@ func (s *SnowflakeRepoIml) CreateKeyWithOptLock(ctx context.Context, key string,
 		return false
 	}
 	return txnResponse.Succeeded
+}
+
+func (s *SnowflakeRepoIml) CreateTemporaryKey(ctx context.Context, key string, val string) bool {
+
+	s1, err := concurrency.NewSession(s.data.etcdCli, concurrency.WithTTL(5))
+	if err != nil {
+		return false
+	}
+
+	_, err = s.data.etcdCli.Put(ctx, key, val, clientv3.WithLease(s1.Lease()))
+	if err != nil {
+		return false
+	}
+
+	return true
 }
 
 func (s *SnowflakeRepoIml) CreateOrUpdateKey(ctx context.Context, key string, val string) bool {

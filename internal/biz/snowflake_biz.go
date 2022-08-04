@@ -4,13 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/middleware/recovery"
+	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/spf13/cast"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"os"
 	"path/filepath"
+	v1 "seg-server/api/leaf-grpc/v1"
 	"seg-server/internal/biz/model"
 	"seg-server/internal/conf"
 	"seg-server/internal/pkg/dir"
@@ -29,16 +34,18 @@ var (
 	sequenceBits       = 12
 	workerIdShift      = sequenceBits
 	timestampLeftShift = sequenceBits + workerIdBits
-	sequenceMask       = int64(^(-1 << sequenceBits)) //4095 0xFFF
-	PrefixEtcdPath     = "/snowflake/"
+	sequenceMask       = int64(^(-1 << sequenceBits)) // 4095 0xFFF
+	PrefixEtcdPath     = "/leaf_snowflake/"
 	PropPath           string
-	PathForever        = PrefixEtcdPath + "/forever" //保存所有数据持久的节点
+	LeafForever        = PrefixEtcdPath + "/forever"   // 保存所有数据持久的节点
+	LeafTemporaryKey   = PrefixEtcdPath + "/temporary" // 集群中leaf节点的临时key
 )
 
 // SnowflakeIdGenUsecase is a snowflake usecase.
 type SnowflakeIdGenUsecase struct {
 	repo SnowflakeIDGenRepo
-	conf *conf.Data
+	conf *conf.Bootstrap
+	r    *etcd.Registry
 
 	twepoch       int64
 	workerId      int64
@@ -60,12 +67,15 @@ type SnowflakeIDGenRepo interface {
 }
 
 // NewSnowflakeIDGenUsecase new a snowflake usecase.
-func NewSnowflakeIDGenUsecase(repo SnowflakeIDGenRepo, conf *conf.Bootstrap, logger log.Logger) *SnowflakeIdGenUsecase {
+func NewSnowflakeIDGenUsecase(repo SnowflakeIDGenRepo, cli *clientv3.Client, conf *conf.Bootstrap, logger log.Logger) *SnowflakeIdGenUsecase {
 	s := &SnowflakeIdGenUsecase{
 		repo: repo,
-		conf: conf.Data,
+		conf: conf,
 		log:  log.NewHelper(log.With(logger, "module", "leaf-grpc/snowflake"))}
 
+	if conf.Data.Etcd.DiscoveryEnable {
+		s.r = etcd.New(cli)
+	}
 	if conf.Data.Etcd.SnowflakeEnable {
 		initSnowflake(s, conf)
 	}
@@ -75,7 +85,7 @@ func NewSnowflakeIDGenUsecase(repo SnowflakeIDGenRepo, conf *conf.Bootstrap, log
 
 // GetSnowflakeID creates a Snowflake ID  运行时，leaf允许最多5ms的回拨；重启时，允许最多3s的回拨
 func (uc *SnowflakeIdGenUsecase) GetSnowflakeID(ctx context.Context) (int64, error) {
-	if uc.conf.Etcd.SnowflakeEnable {
+	if uc.conf.Data.Etcd.SnowflakeEnable {
 		// 多个共享变量会被并发访问，同一时间，应只让一个线程有资格访问数据
 		uc.snowFlakeLock.Lock()
 		defer uc.snowFlakeLock.Unlock()
@@ -132,7 +142,7 @@ func initSnowflake(s *SnowflakeIdGenUsecase, conf *conf.Bootstrap) {
 	PrefixEtcdPath = "/snowflake/" + conf.Server.ServerName
 	PropPath = filepath.Join(dir.GetCurrentAbPath(), conf.Server.ServerName) +
 		"/leafconf/" + s.SnowFlakeEtcdHolder.Port + "/workerID.toml"
-	PathForever = PrefixEtcdPath + "/forever"
+	LeafForever = PrefixEtcdPath + "/forever"
 	s.log.Info("workerID local cache file path : ", PropPath)
 
 	s.SnowFlakeEtcdHolder.ListenAddress = s.SnowFlakeEtcdHolder.Ip + ":" + s.SnowFlakeEtcdHolder.Port
@@ -150,11 +160,11 @@ func initSnowflake(s *SnowflakeIdGenUsecase, conf *conf.Bootstrap) {
 func (uc *SnowflakeIdGenUsecase) initSnowflakeWorkId() bool {
 	var retryCount = 0
 RETRY:
-	prefixKeyResps, err := uc.repo.GetPrefixKey(newTimeoutCtx(time.Second*2), PathForever)
+	prefixKeyResps, err := uc.repo.GetPrefixKey(newTimeoutCtx(time.Second*2), LeafForever)
 	if err == nil {
 		// 还没有实例化过
 		if prefixKeyResps.Count == 0 {
-			uc.SnowFlakeEtcdHolder.EtcdAddressNode = PathForever + "/" + uc.ListenAddress + "-0"
+			uc.SnowFlakeEtcdHolder.EtcdAddressNode = LeafForever + "/" + uc.ListenAddress + "-0"
 			if success := uc.repo.CreateKeyWithOptLock(newTimeoutCtx(time.Second),
 				uc.SnowFlakeEtcdHolder.EtcdAddressNode,
 				string(uc.buildData())); !success {
@@ -201,7 +211,7 @@ RETRY:
 					}
 				}
 				uc.SnowFlakeEtcdHolder.WorkerId = workId + 1
-				uc.SnowFlakeEtcdHolder.EtcdAddressNode = PathForever + "/" + uc.ListenAddress +
+				uc.SnowFlakeEtcdHolder.EtcdAddressNode = LeafForever + "/" + uc.ListenAddress +
 					fmt.Sprintf("-%d", uc.SnowFlakeEtcdHolder.WorkerId)
 				if success := uc.repo.CreateKeyWithOptLock(newTimeoutCtx(time.Second),
 					uc.SnowFlakeEtcdHolder.EtcdAddressNode,
@@ -215,6 +225,38 @@ RETRY:
 				}
 				go uc.scheduledUploadData(uc.SnowFlakeEtcdHolder.EtcdAddressNode)
 				uc.updateLocalWorkerID(uc.WorkerId)
+			}
+		}
+
+		// TODO: RPC获取所有其他Leaf服务节点上服务器的时间
+		if uc.conf.Data.Etcd.DiscoveryEnable {
+			instances, err := uc.r.GetService(newTimeoutCtx(time.Second), uc.conf.Server.ServerName)
+			if err != nil {
+				uc.log.Error("get server instance error : ", err)
+				return false
+			}
+
+			var serverTime int64
+			for _, instance := range instances {
+				// 采取直连方式，不使用selector
+				conn, err := grpc.DialInsecure(
+					context.Background(),
+					grpc.WithEndpoint(strings.Split(instance.Endpoints[1], "//")[1]),
+					grpc.WithMiddleware(
+						recovery.Recovery(),
+					),
+				)
+				client := v1.NewLeafSnowflakeServiceClient(conn)
+				timestamp, err := client.GetServerTimestamp(context.Background(), nil)
+				if err != nil {
+					uc.log.Error("get server timestamp error : ", err)
+					return false
+				}
+				serverTime += timestamp.Timestamp.Seconds
+			}
+			if math.Abs(float64((time.Now().Unix())-serverTime/int64(len(instances)))) >= float64(uc.conf.Data.Etcd.TimeDeviation) {
+				uc.log.Error("check other server time error")
+				return false
 			}
 		}
 	} else {

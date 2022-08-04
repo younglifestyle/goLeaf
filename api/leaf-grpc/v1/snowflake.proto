@@ -4,6 +4,7 @@ package leafgrpc.v1;
 
 import "google/api/annotations.proto";
 import "leaf-grpc/v1/segment.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "seq-server/api/leaf-grpc/v1;v1";
 
@@ -21,6 +22,16 @@ service LeafSnowflakeService {
             get: "/decodeSnowflakeId"
         };
     }
+    // 获取当前server的时间戳
+    rpc GetServerTimestamp (GetServerTimestampReq) returns (GetServerTimestampResp) {}
+}
+
+message GetServerTimestampReq {
+    string msg = 1;
+}
+
+message GetServerTimestampResp {
+    google.protobuf.Timestamp timestamp = 1;
 }
 
 message DecodeSnowflakeIdReq {

@@ -4,10 +4,12 @@ import (
 	"context"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	v1 "seg-server/api/leaf-grpc/v1"
 	"seg-server/internal/biz"
-	"seg-server/internal/pkg/time"
+	mytime "seg-server/internal/pkg/time"
 	"strconv"
+	"time"
 )
 
 // IdGenService is a greeter service.
@@ -27,6 +29,14 @@ func NewIdGenService(segmentIdGenUsecase *biz.SegmentIdGenUsecase, snowflakeIdGe
 		snowflakeIdGenUsecase: snowflakeIdGenUsecase,
 		log:                   log.NewHelper(log.With(logger, "module", "leaf-grpc/service")),
 	}
+}
+
+func (s *IdGenService) GetServerTimestamp(ctx context.Context, in *v1.GetServerTimestampReq) (ts *v1.GetServerTimestampResp, err error) {
+
+	return &v1.GetServerTimestampResp{
+		Timestamp: &timestamp.Timestamp{
+			Seconds: time.Now().Unix(),
+		}}, nil
 }
 
 func (s *IdGenService) GenSnowflakeId(ctx context.Context, in *v1.IdRequest) (idResp *v1.IdReply, err error) {
@@ -50,7 +60,7 @@ func (s *IdGenService) DecodeSnowflakeId(ctx context.Context, in *v1.DecodeSnowf
 
 	snowflakeIdResp = &v1.DecodeSnowflakeIdResp{}
 	originTimestamp := (snowflakeId >> 22) + 1288834974657
-	timeStr := time.GetDateTimeStr(time.UnixToMS(originTimestamp))
+	timeStr := mytime.GetDateTimeStr(mytime.UnixToMS(originTimestamp))
 	snowflakeIdResp.Timestamp = strconv.FormatInt(originTimestamp, 10) + "(" + timeStr + ")"
 
 	workerId := (snowflakeId >> 12) ^ (snowflakeId >> 22 << 10)

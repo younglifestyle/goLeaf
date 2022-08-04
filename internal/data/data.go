@@ -4,6 +4,7 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 	"go.etcd.io/etcd/client/v3"
+	"google.golang.org/grpc"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -42,18 +43,22 @@ func NewData(conf *conf.Data, db *gorm.DB, cli *clientv3.Client, logger log.Logg
 
 // NewEtcdClient 创建 Etcd 客户端
 func NewEtcdClient(c *conf.Data, logger log.Logger) (cli *clientv3.Client) {
-	if c.Etcd.SnowflakeEnable {
+	if c.Etcd.SnowflakeEnable || c.Etcd.DiscoveryEnable {
 		var err error
 		l := log.NewHelper(log.With(logger, "module", "leaf-grpc-repo/etcd_cli"))
 
 		cli, err = clientv3.New(clientv3.Config{
 			Endpoints:   c.Etcd.Endpoints,
 			DialTimeout: c.Etcd.DialTimeout.AsDuration(),
+			DialOptions: []grpc.DialOption{grpc.WithBlock()},
 		})
 		if err != nil {
 			l.Errorf("failed opening connection to etcd : %s", err)
 		}
 	}
+
+	//r := etcd.New(cli)
+	//r.GetService(context.Background())
 
 	return cli
 }
