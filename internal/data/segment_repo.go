@@ -2,10 +2,11 @@ package data
 
 import (
 	"context"
+	"errors"
 	"github.com/go-kratos/kratos/v2/log"
-	"gorm.io/gorm"
 	"seg-server/internal/biz"
 	"seg-server/internal/biz/model"
+	"xorm.io/xorm"
 )
 
 type SegmentIdGenRepoIml struct {
@@ -14,9 +15,8 @@ type SegmentIdGenRepoIml struct {
 }
 
 func (s *SegmentIdGenRepoIml) GetAllLeafAllocs(ctx context.Context) (leafs []*model.LeafAlloc, err error) {
-	if err = s.data.db.Table(s.data.tableName).
-		WithContext(ctx).Find(&leafs).Error; err != nil {
-
+	err = s.data.db.Table(s.data.tableName).Context(ctx).Find(&leafs)
+	if err != nil {
 		return nil, err
 	}
 
@@ -24,9 +24,10 @@ func (s *SegmentIdGenRepoIml) GetAllLeafAllocs(ctx context.Context) (leafs []*mo
 }
 
 func (s *SegmentIdGenRepoIml) GetLeafAlloc(ctx context.Context, tag string) (seg model.LeafAlloc, err error) {
-	if err = s.data.db.Table(s.data.tableName).WithContext(ctx).Select("biz_tag",
-		"max_id", "step").Where("biz_tag = ?", tag).First(&seg).Error; err != nil {
 
+	_, err = s.data.db.Table(s.data.tableName).Context(ctx).Select("biz_tag, max_id, step").
+		Where("biz_tag = ?", tag).Get(&seg)
+	if err != nil {
 		return
 	}
 
@@ -34,10 +35,9 @@ func (s *SegmentIdGenRepoIml) GetLeafAlloc(ctx context.Context, tag string) (seg
 }
 
 func (s *SegmentIdGenRepoIml) GetAllTags(ctx context.Context) (tags []string, err error) {
-	if err = s.data.db.Table(s.data.tableName).WithContext(ctx).
-		Pluck("biz_tag", &tags).Error; err != nil {
-
-		return
+	err = s.data.db.Table(s.data.tableName).Context(ctx).Cols("biz_tag").Find(&tags)
+	if err != nil {
+		return nil, err
 	}
 
 	return
@@ -45,24 +45,28 @@ func (s *SegmentIdGenRepoIml) GetAllTags(ctx context.Context) (tags []string, er
 
 func (s *SegmentIdGenRepoIml) UpdateAndGetMaxId(ctx context.Context, tag string) (leafAlloc model.LeafAlloc, err error) {
 
-	// Begin
-	// UPDATE table SET max_id=max_id+step WHERE biz_tag=xxx
-	// SELECT tag, max_id, step FROM table WHERE biz_tag=xxx
-	// Commit
-	err = s.data.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err = tx.Table(s.data.tableName).Where("biz_tag =?", tag).
-			Update("max_id", gorm.Expr("max_id + step")).Error; err != nil {
+	_, err = s.data.db.Transaction(func(tx *xorm.Session) (interface{}, error) {
+		if _, err := tx.Table(s.data.tableName).Context(ctx).
+			SetExpr("max_id", `"max_id" + "step"`).
+			Update(&model.LeafAlloc{}, &model.LeafAlloc{
+				BizTag: tag,
+			}); err != nil {
 
-			return err
+			return nil, err
 		}
 
-		if err = tx.Table(s.data.tableName).Select("biz_tag",
-			"max_id", "step").Where("biz_tag = ?", tag).First(&leafAlloc).Error; err != nil {
-
-			return err
+		// as conditions
+		leafAlloc.BizTag = tag
+		has, err := tx.Table(s.data.tableName).Context(ctx).Select(`"biz_tag", "max_id", "step"`).
+			Get(&leafAlloc)
+		if err != nil {
+			return nil, err
+		}
+		if !has {
+			return nil, errors.New("no record")
 		}
 
-		return nil
+		return nil, nil
 	})
 
 	return
@@ -70,20 +74,27 @@ func (s *SegmentIdGenRepoIml) UpdateAndGetMaxId(ctx context.Context, tag string)
 
 func (s *SegmentIdGenRepoIml) UpdateMaxIdByCustomStepAndGetLeafAlloc(ctx context.Context, tag string, step int) (leafAlloc model.LeafAlloc, err error) {
 
-	err = s.data.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err = tx.Table(s.data.tableName).Where("biz_tag = ?", tag).
-			Update("max_id", gorm.Expr("max_id + ?", step)).Error; err != nil {
+	_, err = s.data.db.Transaction(func(tx *xorm.Session) (interface{}, error) {
+		if _, err := tx.Table(s.data.tableName).Context(ctx).
+			Incr("max_id", step).
+			Update(&model.LeafAlloc{}, &model.LeafAlloc{
+				BizTag: tag,
+			}); err != nil {
 
-			return err
+			return nil, err
 		}
 
-		if err = tx.Table(s.data.tableName).Select("biz_tag",
-			"max_id", "step").Where("biz_tag = ?", tag).First(&leafAlloc).Error; err != nil {
-
-			return err
+		// as conditions
+		leafAlloc.BizTag = tag
+		has, err := tx.Table(s.data.tableName).Context(ctx).Select(`"biz_tag", "max_id", "step"`).
+			Get(&leafAlloc)
+		if err != nil {
+			return nil, err
 		}
-
-		return nil
+		if !has {
+			return nil, errors.New("no record")
+		}
+		return nil, nil
 	})
 
 	return

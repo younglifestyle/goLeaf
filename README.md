@@ -25,6 +25,27 @@ CREATE TABLE `leaf_alloc` (
 insert into leaf_alloc(biz_tag, max_id, step, description) values('leaf-segment-test', 1, 2000, 'Test leaf Segment Mode Get Id');
 ```
 
+Oracle :
+```oracle
+create table "leaf_alloc"
+(
+    "biz_tag"      VARCHAR2(64),
+    "max_id"       NUMBER,
+    "step"         NUMBER,
+    "description"  VARCHAR2(512),
+    "update_time"  TIMESTAMP(6) default CURRENT_TIMESTAMP,
+    "created_time" TIMESTAMP(6) default CURRENT_TIMESTAMP
+)
+/
+
+create unique index "UQE_leaf_alloc_biz_tag"
+    on "leaf_alloc" ("biz_tag")
+/
+
+
+
+```
+
 - 配置
 
 ```

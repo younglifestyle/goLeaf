@@ -22,8 +22,8 @@ import (
 // wireApp init kratos application.
 func wireApp(bootstrap *conf.Bootstrap, confServer *conf.Server, confData *conf.Data, middlewareMiddleware middleware.Middleware, logger log.Logger) (*kratos.App, func(), error) {
 	client := data.NewEtcdClient(confData, logger)
-	db := data.NewGormClient(confData, logger)
-	dataData, cleanup, err := data.NewData(confData, db, client, logger)
+	engine := data.NewGormClient(confData, logger)
+	dataData, cleanup, err := data.NewData(confData, engine, client, logger)
 	if err != nil {
 		return nil, nil, err
 	}
