@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 	v1 "seg-server/api/leaf-grpc/v1"
 	"seg-server/internal/biz"
+	"seg-server/internal/biz/model"
 	mytime "seg-server/internal/pkg/time"
 	"strconv"
 	"time"
@@ -84,6 +85,23 @@ func (s *IdGenService) GenSegmentId(ctx context.Context, idRequest *v1.IdRequest
 	return &v1.IdReply{Id: strconv.FormatInt(id, 10)}, nil
 }
 
+func (s *IdGenService) CreateSegmentId(ctx context.Context, leafAllocDb *v1.LeafAllocDb) (resp *v1.CreateSegmentIdResp, err error) {
+
+	resp = &v1.CreateSegmentIdResp{}
+	err = s.segmentIdGenUsecase.CreateSegment(ctx, &model.LeafAlloc{
+		BizTag:      leafAllocDb.BizTag,
+		MaxId:       leafAllocDb.MaxId,
+		Step:        int(leafAllocDb.Step),
+		Description: leafAllocDb.Description,
+	})
+	if err != nil {
+		s.log.Error("create id error : ", err)
+		return resp, errors.Unwrap(err)
+	}
+
+	return resp, nil
+}
+
 func (s *IdGenService) GenSegmentCache(ctx context.Context,
 	idRequest *v1.IdRequest) (segbuffViews *v1.SegmentBufferCacheViews, err error) {
 	segbuffViews = &v1.SegmentBufferCacheViews{}
@@ -111,7 +129,7 @@ func (s *IdGenService) GenSegmentCache(ctx context.Context,
 	return
 }
 
-func (s *IdGenService) GenSegmentDB(ctx context.Context, in *v1.IdRequest) (leafs *v1.LeafAllocDbs, err error) {
+func (s *IdGenService) GenSegmentDb(ctx context.Context, in *v1.IdRequest) (leafs *v1.LeafAllocDbs, err error) {
 	leafs = &v1.LeafAllocDbs{}
 
 	allLeafs, err := s.segmentIdGenUsecase.GetAllLeafs(ctx)

@@ -16,6 +16,13 @@ service LeafSegmentService {
     };
   }
 
+  rpc CreateSegmentId (LeafAllocDb) returns (CreateSegmentIdResp) {
+    option (google.api.http) = {
+      post: "/api/segment/info"
+      body: "*"
+    };
+  }
+
   // monitor
   rpc GenSegmentCache (IdRequest) returns (SegmentBufferCacheViews) {
     option (google.api.http) = {
@@ -38,6 +45,10 @@ message IdRequest {
 // 申请到的ID
 message IdReply {
   string id = 1;
+}
+
+message CreateSegmentIdResp {
+  string msg = 1;
 }
 
 // 字段模式在内存中的各项数据

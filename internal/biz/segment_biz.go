@@ -31,6 +31,8 @@ const (
 
 // SegmentIDGenRepo DB and Etcd operate sets
 type SegmentIDGenRepo interface {
+	SaveLeafAlloc(ctx context.Context, leafAlloc *model.LeafAlloc) error
+
 	UpdateAndGetMaxId(ctx context.Context, tag string) (seg model.LeafAlloc, err error)
 	GetLeafAlloc(ctx context.Context, tag string) (seg model.LeafAlloc, err error)
 	GetAllTags(ctx context.Context) (tags []string, err error)
@@ -134,6 +136,16 @@ func (uc *SegmentIdGenUsecase) GetSegID(ctx context.Context, tag string) (int64,
 	} else {
 		return 0, nil
 	}
+}
+
+func (uc *SegmentIdGenUsecase) CreateSegment(ctx context.Context, leafAlloc *model.LeafAlloc) (err error) {
+
+	err = uc.repo.SaveLeafAlloc(ctx, leafAlloc)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (uc *SegmentIdGenUsecase) updateSegmentFromDb(ctx context.Context, bizTag string, segment *model.Segment) (err error) {

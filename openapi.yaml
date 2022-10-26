@@ -31,6 +31,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/segment/info:
+        post:
+            tags:
+                - LeafSegmentService
+            operationId: LeafSegmentService_CreateSegmentId
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LeafAllocDb'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CreateSegmentIdResp'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/snowflake/get:
         get:
             tags:
@@ -128,6 +152,11 @@ paths:
                                 $ref: '#/components/schemas/Status'
 components:
     schemas:
+        CreateSegmentIdResp:
+            type: object
+            properties:
+                msg:
+                    type: string
         DecodeSnowflakeIdResp:
             type: object
             properties:

@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type LeafSegmentServiceClient interface {
 	// 号段模式
 	GenSegmentId(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*IdReply, error)
+	CreateSegmentId(ctx context.Context, in *LeafAllocDb, opts ...grpc.CallOption) (*CreateSegmentIdResp, error)
 	// monitor
 	GenSegmentCache(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*SegmentBufferCacheViews, error)
 	GenSegmentDb(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*LeafAllocDbs, error)
@@ -40,6 +41,15 @@ func NewLeafSegmentServiceClient(cc grpc.ClientConnInterface) LeafSegmentService
 func (c *leafSegmentServiceClient) GenSegmentId(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*IdReply, error) {
 	out := new(IdReply)
 	err := c.cc.Invoke(ctx, "/leafgrpc.v1.LeafSegmentService/GenSegmentId", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *leafSegmentServiceClient) CreateSegmentId(ctx context.Context, in *LeafAllocDb, opts ...grpc.CallOption) (*CreateSegmentIdResp, error) {
+	out := new(CreateSegmentIdResp)
+	err := c.cc.Invoke(ctx, "/leafgrpc.v1.LeafSegmentService/CreateSegmentId", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +80,7 @@ func (c *leafSegmentServiceClient) GenSegmentDb(ctx context.Context, in *IdReque
 type LeafSegmentServiceServer interface {
 	// 号段模式
 	GenSegmentId(context.Context, *IdRequest) (*IdReply, error)
+	CreateSegmentId(context.Context, *LeafAllocDb) (*CreateSegmentIdResp, error)
 	// monitor
 	GenSegmentCache(context.Context, *IdRequest) (*SegmentBufferCacheViews, error)
 	GenSegmentDb(context.Context, *IdRequest) (*LeafAllocDbs, error)
@@ -82,6 +93,9 @@ type UnimplementedLeafSegmentServiceServer struct {
 
 func (UnimplementedLeafSegmentServiceServer) GenSegmentId(context.Context, *IdRequest) (*IdReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenSegmentId not implemented")
+}
+func (UnimplementedLeafSegmentServiceServer) CreateSegmentId(context.Context, *LeafAllocDb) (*CreateSegmentIdResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSegmentId not implemented")
 }
 func (UnimplementedLeafSegmentServiceServer) GenSegmentCache(context.Context, *IdRequest) (*SegmentBufferCacheViews, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenSegmentCache not implemented")
@@ -116,6 +130,24 @@ func _LeafSegmentService_GenSegmentId_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LeafSegmentServiceServer).GenSegmentId(ctx, req.(*IdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LeafSegmentService_CreateSegmentId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LeafAllocDb)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LeafSegmentServiceServer).CreateSegmentId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/leafgrpc.v1.LeafSegmentService/CreateSegmentId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LeafSegmentServiceServer).CreateSegmentId(ctx, req.(*LeafAllocDb))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -166,6 +198,10 @@ var LeafSegmentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GenSegmentId",
 			Handler:    _LeafSegmentService_GenSegmentId_Handler,
+		},
+		{
+			MethodName: "CreateSegmentId",
+			Handler:    _LeafSegmentService_CreateSegmentId_Handler,
 		},
 		{
 			MethodName: "GenSegmentCache",
