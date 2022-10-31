@@ -111,7 +111,7 @@ func (s *IdGenService) GenSegmentCache(ctx context.Context,
 	return
 }
 
-func (s *IdGenService) GenSegmentDB(ctx context.Context, in *v1.IdRequest) (leafs *v1.LeafAllocDbs, err error) {
+func (s *IdGenService) GenSegmentDb(ctx context.Context, in *v1.IdRequest) (leafs *v1.LeafAllocDbs, err error) {
 	leafs = &v1.LeafAllocDbs{}
 
 	allLeafs, err := s.segmentIdGenUsecase.GetAllLeafs(ctx)
