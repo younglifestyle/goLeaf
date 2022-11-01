@@ -2,7 +2,6 @@
 typora-root-url: doc
 typora-copy-images-to: doc
 ---
-
 ## 介绍
 
 Go实现的号段模式以及雪花（Snowflake）发号器，基于Kratos框架，适用于此微服务框架以及服务发现服务
@@ -94,12 +93,12 @@ http://localhost:8000/decodeSnowflakeId
 
 > 例如：http://127.0.0.1:8001/web
 
-![DB号段](image-20221101194429098.png)
+![DB号段](doc/image-20221101194429098.png)
 
-----
+---
 
-![cache中的号段](image-20221101200211195.png)
+![cache中的号段](doc/image-20221101201630411.png)
 
-----
+---
 
-![雪花ID解析](image-20221101200235260.png)
+![雪花ID解析](doc/image-20221101201705230.png)
