@@ -1,3 +1,8 @@
+---
+typora-root-url: doc
+typora-copy-images-to: doc
+---
+
 ## 介绍
 
 Go实现的号段模式以及雪花（Snowflake）发号器，基于Kratos框架，适用于此微服务框架以及服务发现服务
@@ -12,6 +17,7 @@ gRPC访问性能与Leaf同
 
 ```mysql
 CREATE DATABASE leaf;
+
 CREATE TABLE `leaf_alloc` (
     `biz_tag` varchar(128)  NOT NULL DEFAULT '', -- your biz unique name
     `max_id` bigint(20) NOT NULL DEFAULT '1',
@@ -27,7 +33,7 @@ insert into leaf_alloc(biz_tag, max_id, step, description) values('leaf-segment-
 
 - 配置
 
-```
+```yaml
 data:
   database:
     segment_enable: true
@@ -61,12 +67,16 @@ http://localhost:8000/monitor/db
 
 - 配置
 
-```
+```yaml
 data:
   etcd:
     snowflake_enable: true
+    # 启动联动其他leaf节点校验时间的功能
+    discovery_enable: false
     endpoints: ["127.0.0.1:2379"]
     dial_timeout: 2s
+    # discovery_enable开启时使用，服务节点时间的偏差
+    time_deviation: 50
 ```
 
 - 请求接口
@@ -78,4 +88,18 @@ curl http://localhost:8000/api/snowflake/get
 http://localhost:8000/decodeSnowflakeId
 ```
 
-###
+### UI界面
+
+访问地址：http:port/web
+
+> 例如：http://127.0.0.1:8001/web
+
+![DB号段](image-20221101194429098.png)
+
+----
+
+![cache中的号段](image-20221101200211195.png)
+
+----
+
+![雪花ID解析](image-20221101200235260.png)

@@ -1,0 +1,68 @@
+{
+  "type": "page",
+  "title": "DB段查询",
+  "remark": null,
+  "name": "号段查询",
+  "toolbar": [
+    {
+      "type": "action",
+      "align": "right",
+      "label": "刷新",
+      "api": "get:/monitor/db",
+      "primary": true,
+      "actionType": "reload",
+      "target": "crud"
+    }
+  ],
+  "body": [
+    {
+      "type": "crud",
+      "name": "crud",
+      "api": "/monitor/db",
+      "loadDataOnce": true,
+      "filter": null,
+      "columns": [
+        {
+          "name": "biz_tag",
+          "label": "号段名"
+        },
+        {
+          "name": "max_id",
+          "label": "起始ID",
+          "width": 20
+        },
+        {
+          "name": "step",
+          "label": "step"
+        },
+        {
+          "name": "description",
+          "label": "描述"
+        },
+        {
+          "type": "date",
+          "name": "updated_time",
+          "label": "更新时间",
+          "format": "YYYY年MM月DD日 HH时mm分",
+          "sortable": true
+        },
+        {
+          "type": "date",
+          "name": "created_time",
+          "label": "创建时间",
+          "format": "YYYY年MM月DD日 HH时mm分",
+          "sortable": true
+        }
+      ],
+      "affixHeader": true,
+      "columnsTogglable": false,
+      "placeholder": "暂无数据",
+      "tableClassName": "table-db table-striped",
+      "headerClassName": "crud-table-header",
+      "footerClassName": "crud-table-footer",
+      "toolbarClassName": "crud-table-toolbar",
+      "combineNum": 0,
+      "bodyClassName": "panel-default"
+    }
+  ]
+}

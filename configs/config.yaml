@@ -16,7 +16,7 @@ data:
     idle: 10
     idle_timeout: 14400s
   etcd:
-    snowflake_enable: false
+    snowflake_enable: true
     discovery_enable: false
     endpoints: ["127.0.0.1:2379"]
     dial_timeout: 2s

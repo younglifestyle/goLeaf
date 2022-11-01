@@ -1,0 +1,38 @@
+{
+  "status": 0,
+  "msg": "",
+  "data": {
+    "pages": [
+      {
+        "label": "Home",
+        "url": "/",
+        "redirect": "db"
+      },
+      {
+        "label": "号段",
+        "children": [
+          {
+            "label": "DB",
+            "url": "/db",
+            "schemaApi": "get:/pages/leaf-list.json"
+          },
+          {
+            "label": "Cache",
+            "url": "/cache",
+            "schemaApi": "get:/pages/leaf-list-cache.json"
+          }
+        ]
+      },
+      {
+        "label": "snowflake",
+        "children": [
+          {
+            "label": "雪花ID解析",
+            "url": "/snowflake",
+            "schemaApi": "get:/pages/snowflake-list.json"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "type": "page",
+  "title": "缓存段查询",
+  "remark": null,
+  "name": "cache",
+  "toolbar": [
+    {
+      "type": "action",
+      "align": "right",
+      "label": "刷新",
+      "api": "get:/monitor/cache",
+      "primary": true,
+      "actionType": "reload",
+      "target": "crud"
+    }
+  ],
+  "body": [
+    {
+      "type": "crud",
+      "name": "crud",
+      "api": "/monitor/cache",
+      "loadDataOnce": true,
+      "filter": null,
+      "columns": [
+        {
+          "name": "key",
+          "label": "号段名"
+        },
+        {
+          "name": "value0",
+          "label": "当前号段值",
+          "width": 20
+        },
+        {
+          "name": "max0",
+          "label": "当前号段最大值"
+        },
+        {
+          "name": "value1",
+          "label": "下一号段值"
+        },
+        {
+          "name": "step1",
+          "label": "下一号段步进值"
+        },
+        {
+          "name": "max1",
+          "label": "下一号段最大值"
+        },
+        {
+          "name": "pos",
+          "label": "使用的号段"
+        },
+        {
+          "name": "next_ready",
+          "label": "下一号段是否准备"
+        },
+        {
+          "name": "init_ok",
+          "label": "缓存初始化成功"
+        }
+      ],
+      "affixHeader": true,
+      "columnsTogglable": false,
+      "placeholder": "暂无数据",
+      "tableClassName": "table-db table-striped",
+      "headerClassName": "crud-table-header",
+      "footerClassName": "crud-table-footer",
+      "toolbarClassName": "crud-table-toolbar",
+      "combineNum": 0,
+      "bodyClassName": "panel-default"
+    }
+  ]
+}

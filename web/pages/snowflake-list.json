@@ -1,0 +1,56 @@
+{
+  "type": "page",
+  "title": "雪花ID解析",
+  "remark": null,
+  "name": "snowflake",
+  "toolbar": null,
+  "body": {
+    "type": "form",
+    "title": "输入",
+    "mode": "horizontal",
+    "horizontal": {
+      "leftFixed": "sm"
+    },
+    "api": {
+      "method": "get",
+      "url": "/decodeSnowflakeId",
+      "data": {
+        "id": "${id|default:undefined}"
+      }
+    },
+    "submitText": "",
+    "body": [
+      {
+        "type": "input-text",
+        "name": "id",
+        "label": "ID ："
+      },
+      {
+        "type": "divider"
+      },
+      {
+        "type": "form",
+        "name": "otherForm",
+        "title": "返回结果",
+        "actions": [],
+        "body": [
+          {
+            "type": "static",
+            "name": "worker_id",
+            "label": "worker id"
+          },
+          {
+            "type": "static",
+            "name": "sequence_id",
+            "label": "sequence id"
+          },
+          {
+            "type": "static",
+            "name": "timestamp",
+            "label": "timestamp"
+          }
+        ]
+      }
+    ]
+  }
+}

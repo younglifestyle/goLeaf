@@ -1,10 +1,12 @@
 package data
 
 import (
+	"github.com/go-kratos/kratos/v2/encoding/json"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 	"go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
@@ -25,6 +27,13 @@ type Data struct {
 // NewData .
 func NewData(conf *conf.Data, db *gorm.DB, cli *clientv3.Client, logger log.Logger) (*Data, func(), error) {
 	l := log.NewHelper(log.With(logger, "module", "leaf-grpc-repo/data"))
+
+	// 将驼峰改为下划线
+	json.MarshalOptions = protojson.MarshalOptions{
+		EmitUnpopulated: true,
+		UseProtoNames:   true,
+		UseEnumNumbers:  true,
+	}
 
 	cleanup := func() {
 		l.Info("closing the data resources")
