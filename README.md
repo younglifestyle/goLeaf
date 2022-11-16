@@ -93,7 +93,7 @@ http://localhost:8000/decodeSnowflakeId
 
 > 例如：http://127.0.0.1:8001/web
 
-![DB号段](doc/image-20221101194429098.png)
+![DB号段](doc/image-20221101201529905.png)
 
 ---
 

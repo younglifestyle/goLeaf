@@ -1,4 +1,4 @@
-module seg-server
+module goLeaf
 
 go 1.18
 

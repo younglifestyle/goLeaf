@@ -5,12 +5,12 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 	"go.etcd.io/etcd/client/v3"
+	"goLeaf/internal/conf"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
-	"seg-server/internal/conf"
 )
 
 // ProviderSet is data providers.

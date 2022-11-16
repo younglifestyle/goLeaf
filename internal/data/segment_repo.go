@@ -3,9 +3,9 @@ package data
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
+	"goLeaf/internal/biz"
+	"goLeaf/internal/biz/model"
 	"gorm.io/gorm"
-	"seg-server/internal/biz"
-	"seg-server/internal/biz/model"
 )
 
 type SegmentIdGenRepoIml struct {

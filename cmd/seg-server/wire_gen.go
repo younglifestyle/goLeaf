@@ -10,11 +10,11 @@ import (
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
-	"seg-server/internal/biz"
-	"seg-server/internal/conf"
-	"seg-server/internal/data"
-	"seg-server/internal/server"
-	"seg-server/internal/service"
+	"goLeaf/internal/biz"
+	"goLeaf/internal/conf"
+	"goLeaf/internal/data"
+	"goLeaf/internal/server"
+	"goLeaf/internal/service"
 )
 
 // Injectors from wire.go:

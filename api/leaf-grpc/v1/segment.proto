@@ -4,68 +4,68 @@ package leafgrpc.v1;
 
 import "google/api/annotations.proto";
 
-option go_package = "seq-server/api/leaf-grpc/v1;v1";
+option go_package = "goLeaf/api/leaf-grpc/v1;v1";
 
 // Leaf ID生成
 service LeafSegmentService {
 
-  // 号段模式
-  rpc GenSegmentId (IdRequest) returns (IdReply) {
-    option (google.api.http) = {
-      get: "/api/segment/get/{tag}"
-    };
-  }
+    // 号段模式
+    rpc GenSegmentId (IdRequest) returns (IdReply) {
+        option (google.api.http) = {
+            get: "/api/segment/get/{tag}"
+        };
+    }
 
-  // monitor
-  rpc GenSegmentCache (IdRequest) returns (SegmentBufferCacheViews) {
-    option (google.api.http) = {
-      get: "/monitor/cache"
-    };
-  }
+    // monitor
+    rpc GenSegmentCache (IdRequest) returns (SegmentBufferCacheViews) {
+        option (google.api.http) = {
+            get: "/monitor/cache"
+        };
+    }
 
-  rpc GenSegmentDb (IdRequest) returns (LeafAllocDbs) {
-    option (google.api.http) = {
-      get: "/monitor/db"
-    };
-  }
+    rpc GenSegmentDb (IdRequest) returns (LeafAllocDbs) {
+        option (google.api.http) = {
+            get: "/monitor/db"
+        };
+    }
 }
 
 // 申请ID的BIZ Tag
 message IdRequest {
-  string tag = 1;
+    string tag = 1;
 }
 
 // 申请到的ID
 message IdReply {
-  string id = 1;
+    string id = 1;
 }
 
 // 字段模式在内存中的各项数据
 message SegmentBufferCacheView {
-  string key = 1;
-  int64 value0 = 2;
-  int32 step0 = 3;
-  int64 max0 = 4;
-  int64 value1 = 5;
-  int32 step1 = 6;
-  int64 max1 = 7;
-  int32 pos = 8;
-  bool next_ready = 9;
-  bool init_ok = 10;
+    string key = 1;
+    int64 value0 = 2;
+    int32 step0 = 3;
+    int64 max0 = 4;
+    int64 value1 = 5;
+    int32 step1 = 6;
+    int64 max1 = 7;
+    int32 pos = 8;
+    bool next_ready = 9;
+    bool init_ok = 10;
 }
 
 message SegmentBufferCacheViews {
-  repeated SegmentBufferCacheView segment_buffer_cache_view = 1;
+    repeated SegmentBufferCacheView segment_buffer_cache_view = 1;
 }
 
 message LeafAllocDb {
-  string biz_tag = 1;
-  int64 max_id = 2;
-  int32 step = 3;
-  string description = 4;
-  int64 updated_time = 5;
-  int64 created_time = 6;
+    string biz_tag = 1;
+    int64 max_id = 2;
+    int32 step = 3;
+    string description = 4;
+    int64 updated_time = 5;
+    int64 created_time = 6;
 }
 message LeafAllocDbs {
-  repeated LeafAllocDb leaf_alloc_dbs = 1;
+    repeated LeafAllocDb leaf_alloc_dbs = 1;
 }

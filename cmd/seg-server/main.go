@@ -16,13 +16,13 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
-	"seg-server/internal/conf"
+	"goLeaf/internal/conf"
 )
 
 // go build -ldflags "-X main.Version=x.y.z"
 var (
 	// Name is the name of the compiled software.
-	Name string = "seg-server"
+	Name string = "goLeaf"
 	// Version is the version of the compiled software.
 	Version string
 	// flagconf is the config flag.

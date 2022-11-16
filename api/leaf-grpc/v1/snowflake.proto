@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "leaf-grpc/v1/segment.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "seq-server/api/leaf-grpc/v1;v1";
+option go_package = "goLeaf/api/leaf-grpc/v1;v1";
 
 // Leaf ID生成
 service LeafSnowflakeService {

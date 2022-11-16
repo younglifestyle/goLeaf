@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package leafgrpc.v1;
 
-option go_package = "seg-server/api/helloworld/v1;v1";
+option go_package = "goLeaf/api/helloworld/v1;v1";
 
 enum ErrorReason {
   SEG_SERVER_UNSPECIFIED = 0;

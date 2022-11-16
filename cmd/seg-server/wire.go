@@ -10,11 +10,11 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/google/wire"
-	"seg-server/internal/biz"
-	"seg-server/internal/conf"
-	"seg-server/internal/data"
-	"seg-server/internal/server"
-	"seg-server/internal/service"
+	"goLeaf/internal/biz"
+	"goLeaf/internal/conf"
+	"goLeaf/internal/data"
+	"goLeaf/internal/server"
+	"goLeaf/internal/service"
 )
 
 // wireApp init kratos application.

@@ -5,9 +5,9 @@ import (
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	v1 "seg-server/api/leaf-grpc/v1"
-	"seg-server/internal/biz"
-	mytime "seg-server/internal/pkg/time"
+	v1 "goLeaf/api/leaf-grpc/v1"
+	"goLeaf/internal/biz"
+	mytime "goLeaf/internal/pkg/time"
 	"strconv"
 	"time"
 )

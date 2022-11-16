@@ -6,10 +6,10 @@ import (
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"go.uber.org/atomic"
+	v1 "goLeaf/api/leaf-grpc/v1"
+	"goLeaf/internal/biz/model"
+	"goLeaf/internal/conf"
 	"golang.org/x/sync/singleflight"
-	v1 "seg-server/api/leaf-grpc/v1"
-	"seg-server/internal/biz/model"
-	"seg-server/internal/conf"
 	"sync"
 	"time"
 )

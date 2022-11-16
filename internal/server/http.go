@@ -8,9 +8,9 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/gorilla/handlers"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	v1 "seg-server/api/leaf-grpc/v1"
-	"seg-server/internal/conf"
-	"seg-server/internal/service"
+	v1 "goLeaf/api/leaf-grpc/v1"
+	"goLeaf/internal/conf"
+	"goLeaf/internal/service"
 )
 
 // NewHTTPServer new a HTTP server.

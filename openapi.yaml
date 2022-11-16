@@ -157,16 +157,19 @@ components:
                 bizTag:
                     type: string
                 maxId:
-                    type: string
+                    type: integer
+                    format: int64
                 step:
                     type: integer
                     format: int32
                 description:
                     type: string
                 updatedTime:
-                    type: string
+                    type: integer
+                    format: int64
                 createdTime:
-                    type: string
+                    type: integer
+                    format: int64
         LeafAllocDbs:
             type: object
             properties:
@@ -180,19 +183,23 @@ components:
                 key:
                     type: string
                 value0:
-                    type: string
+                    type: integer
+                    format: int64
                 step0:
                     type: integer
                     format: int32
                 max0:
-                    type: string
+                    type: integer
+                    format: int64
                 value1:
-                    type: string
+                    type: integer
+                    format: int64
                 step1:
                     type: integer
                     format: int32
                 max1:
-                    type: string
+                    type: integer
+                    format: int64
                 pos:
                     type: integer
                     format: int32

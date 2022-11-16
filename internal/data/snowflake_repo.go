@@ -5,7 +5,7 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
-	"seg-server/internal/biz"
+	"goLeaf/internal/biz"
 )
 
 type SnowflakeRepoIml struct {
