@@ -6,7 +6,6 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"net"
 	"os"
 
 	prom "github.com/go-kratos/kratos/contrib/metrics/prometheus/v2"
@@ -111,16 +110,4 @@ func main() {
 	if err := app.Run(); err != nil {
 		panic(err)
 	}
-}
-
-func GetLocalMac() (mac string) {
-	// 获取本机的MAC地址
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		panic("Poor soul, here is what you got: " + err.Error())
-	}
-	for _, inter := range interfaces {
-		mac = string(inter.HardwareAddr) //获取本机MAC地址
-	}
-	return mac
 }
