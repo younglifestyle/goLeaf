@@ -350,6 +350,7 @@ func (uc *SegmentIdGenUsecase) loadSeqs() (err error) {
 		segment.SetMax(0)
 		segment.SetStep(0)
 		uc.cache.Store(k, segmentBuffer)
+		cacheTags[k] = struct{}{}
 		uc.log.Infof("Add tag {%s} from db to IdCache", k)
 	}
 
