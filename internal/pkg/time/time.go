@@ -23,3 +23,11 @@ func UtilNextMillis(lastTimestamp int64) int64 {
 	}
 	return ts
 }
+
+// CalcZeroTime 计算当前时间距离零点的间隔
+func CalcZeroTime() time.Duration {
+	now := time.Now()
+	next := now.Add(time.Hour * 24)
+	next = time.Date(next.Year(), next.Month(), next.Day(), 0, 0, 0, 0, next.Location())
+	return next.Sub(now)
+}

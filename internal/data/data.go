@@ -5,6 +5,7 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 	"go.etcd.io/etcd/client/v3"
+	"goLeaf/internal/biz/model"
 	"goLeaf/internal/conf"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -87,6 +88,8 @@ func NewGormClient(c *conf.Data, logger log.Logger) (db *gorm.DB) {
 		if err != nil {
 			l.Fatalf("failed opening connection to db: %v", err)
 		}
+
+		_ = db.AutoMigrate(&model.LeafAlloc{})
 
 		// 获取通用数据库对象 sql.DB ，然后使用其提供的功能
 		sqlDB, err := db.DB()

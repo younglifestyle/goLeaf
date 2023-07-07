@@ -2,15 +2,41 @@ package data
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
 	"goLeaf/internal/biz"
 	"goLeaf/internal/biz/model"
 	"gorm.io/gorm"
+	"strings"
 )
 
 type SegmentIdGenRepoIml struct {
 	data *Data
 	log  *log.Helper
+}
+
+func (s *SegmentIdGenRepoIml) CleanLeafMaxId(ctx context.Context, tags []string) (err error) {
+	err = s.data.db.Table(s.data.tableName).WithContext(ctx).
+		Where("biz_tag IN ?", tags).Update("max_id", 1).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *SegmentIdGenRepoIml) SaveLeafAlloc(ctx context.Context, leafAlloc *model.LeafAlloc) error {
+
+	err := s.data.db.Table(s.data.tableName).WithContext(ctx).Create(leafAlloc).Error
+	if err != nil {
+		if strings.Contains(err.Error(), "Duplicate") {
+			return fmt.Errorf("%s, %s, %w", "save leaf info error", err, biz.ErrIDExist)
+		}
+
+		return fmt.Errorf("%s, %s, %w", "save leaf info error", err, biz.ErrDBOps)
+	}
+
+	return nil
 }
 
 func (s *SegmentIdGenRepoIml) GetAllLeafAllocs(ctx context.Context) (leafs []*model.LeafAlloc, err error) {
@@ -26,7 +52,6 @@ func (s *SegmentIdGenRepoIml) GetAllLeafAllocs(ctx context.Context) (leafs []*mo
 func (s *SegmentIdGenRepoIml) GetLeafAlloc(ctx context.Context, tag string) (seg model.LeafAlloc, err error) {
 	if err = s.data.db.Table(s.data.tableName).WithContext(ctx).Select("biz_tag",
 		"max_id", "step").Where("biz_tag = ?", tag).First(&seg).Error; err != nil {
-
 		return
 	}
 

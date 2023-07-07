@@ -31,6 +31,59 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/segment/ids:
+        get:
+            tags:
+                - LeafSegmentService
+            description: 批量获取号段模式
+            operationId: LeafSegmentService_GenSegmentIds
+            parameters:
+                - name: tag
+                  in: query
+                  schema:
+                    type: string
+                - name: num
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GenSegmentIdsReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/segment/info:
+        post:
+            tags:
+                - LeafSegmentService
+            operationId: LeafSegmentService_CreateSegmentId
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LeafAllocDb'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CreateSegmentIdResp'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/snowflake/get:
         get:
             tags:
@@ -128,6 +181,11 @@ paths:
                                 $ref: '#/components/schemas/Status'
 components:
     schemas:
+        CreateSegmentIdResp:
+            type: object
+            properties:
+                msg:
+                    type: string
         DecodeSnowflakeIdResp:
             type: object
             properties:
@@ -137,6 +195,14 @@ components:
                     type: string
                 timestamp:
                     type: string
+        GenSegmentIdsReply:
+            type: object
+            properties:
+                ids:
+                    type: array
+                    items:
+                        type: string
+            description: 申请到的ID 列表
         GoogleProtobufAny:
             type: object
             properties:
@@ -170,6 +236,8 @@ components:
                 createdTime:
                     type: integer
                     format: int64
+                autoClean:
+                    type: boolean
         LeafAllocDbs:
             type: object
             properties:

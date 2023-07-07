@@ -9,13 +9,15 @@ import (
 	v1 "goLeaf/api/leaf-grpc/v1"
 	"goLeaf/internal/biz/model"
 	"goLeaf/internal/conf"
+	mytime "goLeaf/internal/pkg/time"
 	"golang.org/x/sync/singleflight"
 	"sync"
 	"time"
 )
 
 var (
-	ErrDBOps = errors.NotFound(v1.ErrorReason_DB_OPERATE.String(), "update and get id error")
+	ErrIDExist = errors.BadRequest(v1.ErrorReason_DB_OPERATE.String(), "")
+	ErrDBOps   = errors.NotFound(v1.ErrorReason_DB_OPERATE.String(), "update and get id error")
 	// ErrTagNotFound key不存在时的异常码
 	ErrTagNotFound            = errors.NotFound(v1.ErrorReason_BIZ_TAG_NOT_FOUND.String(), "biz tag not found")
 	ErrIDCacheInitFalse       = errors.InternalServer(v1.ErrorReason_ID_CACHE_INIT_FALSE.String(), "id cache init false")
@@ -31,20 +33,25 @@ const (
 
 // SegmentIDGenRepo DB and Etcd operate sets
 type SegmentIDGenRepo interface {
+	SaveLeafAlloc(ctx context.Context, leafAlloc *model.LeafAlloc) error
+
 	UpdateAndGetMaxId(ctx context.Context, tag string) (seg model.LeafAlloc, err error)
 	GetLeafAlloc(ctx context.Context, tag string) (seg model.LeafAlloc, err error)
 	GetAllTags(ctx context.Context) (tags []string, err error)
 	GetAllLeafAllocs(ctx context.Context) (leafs []*model.LeafAlloc, err error)
 	UpdateMaxIdByCustomStepAndGetLeafAlloc(ctx context.Context, tag string, step int) (leafAlloc model.LeafAlloc, err error)
+
+	CleanLeafMaxId(ctx context.Context, tags []string) (err error)
 }
 
 // SegmentIdGenUsecase is a Segment usecase.
 type SegmentIdGenUsecase struct {
-	repo            SegmentIDGenRepo
-	conf            *conf.Data
-	singleGroup     singleflight.Group
-	segmentDuration int64    // 号段消耗时间
-	cache           sync.Map // k biz-tag : v model.SegmentBuffer
+	repo             SegmentIDGenRepo
+	conf             *conf.Data
+	singleGroup      singleflight.Group
+	segmentDuration  int64    // 号段消耗时间
+	cache            sync.Map // k biz-tag : v model.SegmentBuffer
+	quickLoadSeqFlag chan struct{}
 
 	twepoch       int64
 	workerId      int64
@@ -136,6 +143,21 @@ func (uc *SegmentIdGenUsecase) GetSegID(ctx context.Context, tag string) (int64,
 	}
 }
 
+func (uc *SegmentIdGenUsecase) CreateSegment(ctx context.Context, leafAlloc *model.LeafAlloc) (err error) {
+
+	err = uc.repo.SaveLeafAlloc(ctx, leafAlloc)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		// 快速load号段，以使号段添加进入缓存
+		uc.quickLoadSeqFlag <- struct{}{}
+	}()
+
+	return nil
+}
+
 func (uc *SegmentIdGenUsecase) updateSegmentFromDb(ctx context.Context, bizTag string, segment *model.Segment) (err error) {
 
 	var leafAlloc model.LeafAlloc
@@ -151,6 +173,7 @@ func (uc *SegmentIdGenUsecase) updateSegmentFromDb(ctx context.Context, bizTag s
 		}
 		segmentBuffer.SetStep(leafAlloc.Step)
 		segmentBuffer.SetMinStep(leafAlloc.Step)
+		segmentBuffer.SetAutoClean(leafAlloc.AutoClean)
 	} else if segmentBuffer.GetUpdateTimeStamp() == 0 {
 		// 如果buffer的更新时间是0（初始是0，也就是第二次调用updateSegmentFromDb()）
 		leafAlloc, err = uc.repo.UpdateAndGetMaxId(ctx, bizTag)
@@ -304,12 +327,20 @@ func (uc *SegmentIdGenUsecase) getIdFromSegmentBuffer(ctx context.Context, cache
 
 // loadProc 定时1min同步一次db和cache
 func (uc *SegmentIdGenUsecase) loadProc() {
+	autoCleanTimer := time.NewTimer(mytime.CalcZeroTime())
 	ticker := time.NewTicker(time.Minute)
 
 	for {
 		select {
 		case <-ticker.C:
 			_ = uc.loadSeqs()
+		case <-uc.quickLoadSeqFlag:
+			_ = uc.loadSeqs()
+			ticker.Reset(time.Minute)
+		case <-autoCleanTimer.C:
+			// 零点执行auto clean
+			_ = uc.autoCleanSeqs()
+			autoCleanTimer = time.NewTimer(time.Hour * 24)
 		}
 	}
 }
@@ -364,6 +395,37 @@ func (uc *SegmentIdGenUsecase) loadSeqs() (err error) {
 		for _, tag := range removeTags {
 			uc.cache.Delete(tag)
 		}
+	}
+
+	return nil
+}
+
+func (uc *SegmentIdGenUsecase) autoCleanSeqs() (err error) {
+
+	var needCleanBizTags []string
+
+	uc.cache.Range(func(k, v interface{}) bool {
+		segmentBuffer := v.(*model.SegmentBuffer)
+		if segmentBuffer.AutoClean {
+			needCleanBizTags = append(needCleanBizTags, segmentBuffer.BizKey)
+		}
+
+		func() {
+			segmentBuffer.WLock()
+			defer segmentBuffer.WUnLock()
+
+			segmentBuffer.SetNextReady(false)
+			segmentBuffer.Segments[0].Value = atomic.NewInt64(1)
+			segmentBuffer.Segments[0].MaxId = int64(segmentBuffer.GetStep() + 1)
+		}()
+
+		return true
+	})
+
+	err = uc.repo.CleanLeafMaxId(context.Background(), needCleanBizTags)
+	if err != nil {
+		log.Error("update tags max id to start id error : ", err)
+		return err
 	}
 
 	return nil

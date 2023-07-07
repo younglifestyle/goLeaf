@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type LeafAlloc struct {
 	//ID          uint   `gorm:"primaryKey" json:"-"`
@@ -10,4 +12,5 @@ type LeafAlloc struct {
 	Description string    `gorm:"column:description; type:VARCHAR(256) not null" json:"description"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime:milli;column:update_time" json:"update_time,omitempty"`
 	CreatedAt   time.Time `gorm:"autoCreateTime:milli;column:created_time" json:"created_time,omitempty"`
+	AutoClean   bool      `gorm:"column:auto_clean;default:false" json:"auto_clean"`
 }

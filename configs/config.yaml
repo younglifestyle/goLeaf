@@ -1,10 +1,10 @@
 server:
   server_name: "leaf"
   http:
-    addr: 127.0.0.1:8001
+    addr: 0.0.0.0:18001
     timeout: 2s
   grpc:
-    addr: 0.0.0.0:9001
+    addr: 0.0.0.0:19001
     timeout: 2s
 data:
   database:

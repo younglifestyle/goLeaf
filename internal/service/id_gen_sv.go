@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 	v1 "goLeaf/api/leaf-grpc/v1"
 	"goLeaf/internal/biz"
+	"goLeaf/internal/biz/model"
 	mytime "goLeaf/internal/pkg/time"
 	"strconv"
 	"time"
@@ -70,6 +71,40 @@ func (s *IdGenService) DecodeSnowflakeId(ctx context.Context, in *v1.DecodeSnowf
 	snowflakeIdResp.SequenceId = strconv.FormatInt(sequence, 10)
 
 	return
+}
+
+func (s *IdGenService) CreateSegmentId(ctx context.Context, leafAllocDb *v1.LeafAllocDb) (resp *v1.CreateSegmentIdResp, err error) {
+
+	resp = &v1.CreateSegmentIdResp{}
+	err = s.segmentIdGenUsecase.CreateSegment(ctx, &model.LeafAlloc{
+		BizTag:      leafAllocDb.BizTag,
+		MaxId:       leafAllocDb.MaxId,
+		Step:        int(leafAllocDb.Step),
+		Description: leafAllocDb.Description,
+		AutoClean:   leafAllocDb.AutoClean,
+	})
+	if err != nil {
+		s.log.Error("create id error : ", err)
+		return resp, errors.Unwrap(err)
+	}
+
+	return resp, nil
+}
+
+func (s *IdGenService) GenSegmentIds(ctx context.Context, genSegmentIdsReq *v1.GenSegmentIdsReq) (*v1.GenSegmentIdsReply, error) {
+
+	resp := &v1.GenSegmentIdsReply{}
+	for i := 0; i < int(genSegmentIdsReq.Num); i++ {
+		id, err := s.segmentIdGenUsecase.GetSegID(ctx, genSegmentIdsReq.Tag)
+		if err != nil {
+			s.log.Error("get id error : ", err)
+			return &v1.GenSegmentIdsReply{}, errors.Unwrap(err)
+		}
+
+		resp.Ids = append(resp.Ids, strconv.FormatInt(id, 10))
+	}
+
+	return resp, nil
 }
 
 // GenSegmentId

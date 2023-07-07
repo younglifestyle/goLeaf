@@ -28,6 +28,20 @@ service LeafSegmentService {
             get: "/monitor/db"
         };
     }
+
+    rpc CreateSegmentId (LeafAllocDb) returns (CreateSegmentIdResp) {
+        option (google.api.http) = {
+            post: "/api/segment/info"
+            body: "*"
+        };
+    }
+
+    // 批量获取号段模式
+    rpc GenSegmentIds (GenSegmentIdsReq) returns (GenSegmentIdsReply) {
+        option (google.api.http) = {
+            get: "/api/segment/ids"
+        };
+    }
 }
 
 // 申请ID的BIZ Tag
@@ -38,6 +52,17 @@ message IdRequest {
 // 申请到的ID
 message IdReply {
     string id = 1;
+}
+
+// 申请ID的BIZ Tag
+message GenSegmentIdsReq {
+    string tag = 1;
+    int32 num = 2;
+}
+
+// 申请到的ID 列表
+message GenSegmentIdsReply {
+    repeated string ids = 1;
 }
 
 // 字段模式在内存中的各项数据
@@ -65,7 +90,12 @@ message LeafAllocDb {
     string description = 4;
     int64 updated_time = 5;
     int64 created_time = 6;
+    bool auto_clean = 7;
 }
 message LeafAllocDbs {
     repeated LeafAllocDb leaf_alloc_dbs = 1;
+}
+
+message CreateSegmentIdResp {
+    string msg = 1;
 }

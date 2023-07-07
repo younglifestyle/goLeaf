@@ -27,6 +27,9 @@ type LeafSegmentServiceClient interface {
 	// monitor
 	GenSegmentCache(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*SegmentBufferCacheViews, error)
 	GenSegmentDb(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*LeafAllocDbs, error)
+	CreateSegmentId(ctx context.Context, in *LeafAllocDb, opts ...grpc.CallOption) (*CreateSegmentIdResp, error)
+	// 批量获取号段模式
+	GenSegmentIds(ctx context.Context, in *GenSegmentIdsReq, opts ...grpc.CallOption) (*GenSegmentIdsReply, error)
 }
 
 type leafSegmentServiceClient struct {
@@ -64,6 +67,24 @@ func (c *leafSegmentServiceClient) GenSegmentDb(ctx context.Context, in *IdReque
 	return out, nil
 }
 
+func (c *leafSegmentServiceClient) CreateSegmentId(ctx context.Context, in *LeafAllocDb, opts ...grpc.CallOption) (*CreateSegmentIdResp, error) {
+	out := new(CreateSegmentIdResp)
+	err := c.cc.Invoke(ctx, "/leafgrpc.v1.LeafSegmentService/CreateSegmentId", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *leafSegmentServiceClient) GenSegmentIds(ctx context.Context, in *GenSegmentIdsReq, opts ...grpc.CallOption) (*GenSegmentIdsReply, error) {
+	out := new(GenSegmentIdsReply)
+	err := c.cc.Invoke(ctx, "/leafgrpc.v1.LeafSegmentService/GenSegmentIds", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LeafSegmentServiceServer is the server API for LeafSegmentService service.
 // All implementations must embed UnimplementedLeafSegmentServiceServer
 // for forward compatibility
@@ -73,6 +94,9 @@ type LeafSegmentServiceServer interface {
 	// monitor
 	GenSegmentCache(context.Context, *IdRequest) (*SegmentBufferCacheViews, error)
 	GenSegmentDb(context.Context, *IdRequest) (*LeafAllocDbs, error)
+	CreateSegmentId(context.Context, *LeafAllocDb) (*CreateSegmentIdResp, error)
+	// 批量获取号段模式
+	GenSegmentIds(context.Context, *GenSegmentIdsReq) (*GenSegmentIdsReply, error)
 	mustEmbedUnimplementedLeafSegmentServiceServer()
 }
 
@@ -88,6 +112,12 @@ func (UnimplementedLeafSegmentServiceServer) GenSegmentCache(context.Context, *I
 }
 func (UnimplementedLeafSegmentServiceServer) GenSegmentDb(context.Context, *IdRequest) (*LeafAllocDbs, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenSegmentDb not implemented")
+}
+func (UnimplementedLeafSegmentServiceServer) CreateSegmentId(context.Context, *LeafAllocDb) (*CreateSegmentIdResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSegmentId not implemented")
+}
+func (UnimplementedLeafSegmentServiceServer) GenSegmentIds(context.Context, *GenSegmentIdsReq) (*GenSegmentIdsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenSegmentIds not implemented")
 }
 func (UnimplementedLeafSegmentServiceServer) mustEmbedUnimplementedLeafSegmentServiceServer() {}
 
@@ -156,6 +186,42 @@ func _LeafSegmentService_GenSegmentDb_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LeafSegmentService_CreateSegmentId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LeafAllocDb)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LeafSegmentServiceServer).CreateSegmentId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/leafgrpc.v1.LeafSegmentService/CreateSegmentId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LeafSegmentServiceServer).CreateSegmentId(ctx, req.(*LeafAllocDb))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LeafSegmentService_GenSegmentIds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenSegmentIdsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LeafSegmentServiceServer).GenSegmentIds(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/leafgrpc.v1.LeafSegmentService/GenSegmentIds",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LeafSegmentServiceServer).GenSegmentIds(ctx, req.(*GenSegmentIdsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LeafSegmentService_ServiceDesc is the grpc.ServiceDesc for LeafSegmentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -174,6 +240,14 @@ var LeafSegmentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GenSegmentDb",
 			Handler:    _LeafSegmentService_GenSegmentDb_Handler,
+		},
+		{
+			MethodName: "CreateSegmentId",
+			Handler:    _LeafSegmentService_CreateSegmentId_Handler,
+		},
+		{
+			MethodName: "GenSegmentIds",
+			Handler:    _LeafSegmentService_GenSegmentIds_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -20,11 +20,12 @@ type SegmentBufferParam struct {
 	Step          int
 	MinStep       int
 	UpdatedTime   int64
+	AutoClean     bool //用于每天置零流水号
 }
 
 func NewSegmentBuffer() *SegmentBuffer {
 	s := new(SegmentBuffer)
-	s.Segments = make([]*Segment, 0, 0)
+	s.Segments = make([]*Segment, 0, 2)
 	segment1 := NewSegment(s)
 	segment2 := NewSegment(s)
 	s.Segments = append(s.Segments, segment1, segment2)
@@ -34,6 +35,14 @@ func NewSegmentBuffer() *SegmentBuffer {
 	s.ThreadRunning = atomic.NewBool(false)
 	s.RWMutex = &sync.RWMutex{}
 	return s
+}
+
+func (segbf *SegmentBuffer) GetAutoClean() bool {
+	return segbf.AutoClean
+}
+
+func (segbf *SegmentBuffer) SetAutoClean(AutoClean bool) {
+	segbf.AutoClean = AutoClean
 }
 
 func (segbf *SegmentBuffer) GetKey() string {
