@@ -28,8 +28,7 @@
         },
         {
           "name": "max_id",
-          "label": "起始ID",
-          "width": 20
+          "label": "起始ID"
         },
         {
           "name": "step",
@@ -38,6 +37,10 @@
         {
           "name": "description",
           "label": "描述"
+        },
+        {
+          "name": "auto_clean",
+          "label": "自动清零"
         },
         {
           "type": "date",

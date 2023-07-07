@@ -20,12 +20,14 @@ service LeafSegmentService {
     rpc GenSegmentCache (IdRequest) returns (SegmentBufferCacheViews) {
         option (google.api.http) = {
             get: "/monitor/cache"
+            response_body: "segment_buffer_cache_view"
         };
     }
 
     rpc GenSegmentDb (IdRequest) returns (LeafAllocDbs) {
         option (google.api.http) = {
             get: "/monitor/db"
+            response_body: "leaf_alloc_dbs"
         };
     }
 

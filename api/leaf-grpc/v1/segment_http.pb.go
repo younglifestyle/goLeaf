@@ -98,7 +98,7 @@ func _LeafSegmentService_GenSegmentDb0_HTTP_Handler(srv LeafSegmentServiceHTTPSe
 			return err
 		}
 		reply := out.(*LeafAllocDbs)
-		return ctx.Result(200, reply)
+		return ctx.Result(200, reply.LeafAllocDbs)
 	}
 }
 
@@ -188,7 +188,7 @@ func (c *LeafSegmentServiceHTTPClientImpl) GenSegmentDb(ctx context.Context, in 
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationLeafSegmentServiceGenSegmentDb))
 	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out.LeafAllocDbs, opts...)
 	if err != nil {
 		return nil, err
 	}

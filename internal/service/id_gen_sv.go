@@ -163,6 +163,7 @@ func (s *IdGenService) GenSegmentDb(ctx context.Context, in *v1.IdRequest) (leaf
 		v.Description = leaf.Description
 		v.UpdatedTime = leaf.UpdatedAt.Unix()
 		v.CreatedTime = leaf.CreatedAt.Unix()
+		v.AutoClean = leaf.AutoClean
 		leafs.LeafAllocDbs = append(leafs.LeafAllocDbs, v)
 	}
 

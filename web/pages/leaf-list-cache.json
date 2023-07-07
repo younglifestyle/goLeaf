@@ -18,7 +18,13 @@
     {
       "type": "crud",
       "name": "crud",
-      "api": "/monitor/cache",
+      "api": {
+        "method": "get",
+        "url": "/monitor/cache?amisDebug=1",
+        "responseData": {
+          "&": "${segment_buffer_cache_view}"
+        }
+      },
       "loadDataOnce": true,
       "filter": null,
       "columns": [
@@ -28,8 +34,7 @@
         },
         {
           "name": "value0",
-          "label": "当前号段值",
-          "width": 20
+          "label": "当前号段值"
         },
         {
           "name": "max0",
