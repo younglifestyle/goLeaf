@@ -8,6 +8,12 @@ Go实现的号段模式以及雪花（Snowflake）发号器，基于Kratos框架
 
 gRPC访问性能与Leaf同
 
+> 增加流水号每天自动清零的功能(增加字段`auto_clean`，仅保证单节点用)
+>
+> 增加接口，支持远程添加号段tag；
+>
+> 增加批量获取号段接口；
+
 ## 使用
 
 ### 号段模式
@@ -24,6 +30,7 @@ CREATE TABLE `leaf_alloc` (
     `description` varchar(256)  DEFAULT NULL,
     `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `created_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `auto_clean` tinyint(1) default 0 null,
     PRIMARY KEY (`biz_tag`)
 ) ENGINE=InnoDB;
 
@@ -61,7 +68,6 @@ http://localhost:8000/monitor/cache
 // 查看DB中号段的数据
 http://localhost:8000/monitor/db
 ```
-
 ### 雪花模式
 
 - 配置
