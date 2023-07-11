@@ -7,6 +7,63 @@
     {
       "type": "action",
       "align": "right",
+      "label": "新增",
+      "primary": true,
+      "actionType": "dialog",
+      "dialog": {
+        "title": "新增号段",
+        "body": {
+          "type": "form",
+          "api": "post:/api/segment/info",
+          "body": [
+            {
+              "type": "input-text",
+              "name": "biz_tag",
+              "label": "号段名",
+              "required": true
+            },
+            {
+              "type": "input-number",
+              "name": "max_id",
+              "label": "起始ID",
+              "required": true,
+              "showSteps": false
+            },
+            {
+              "type": "input-number",
+              "name": "step",
+              "label": "step",
+              "required": true,
+              "showSteps": false
+            },
+            {
+              "type": "input-text",
+              "name": "description",
+              "label": "描述"
+            },
+            {
+              "name": "auto_clean",
+              "type": "radios",
+              "label": "每日0点清零",
+              "selectFirst": true,
+              "options": [
+                {
+                  "label": "否",
+                  "value": false
+                },
+                {
+                  "label": "是",
+                  "value": true
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "action",
+      "align": "right",
       "label": "刷新",
       "api": "get:/monitor/db",
       "primary": true,

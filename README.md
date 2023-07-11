@@ -8,7 +8,7 @@ Go实现的号段模式以及雪花（Snowflake）发号器，基于Kratos框架
 
 gRPC访问性能与Leaf同
 
-> 增加流水号每天自动清零的功能(增加字段`auto_clean`，仅保证单节点用)
+> 增加流水号每天自动清零的功能(增加字段`auto_clean`，仅保证单节点用，Nginx Backup)
 >
 > 增加接口，支持远程添加号段tag；
 >

@@ -20,7 +20,7 @@
       "name": "crud",
       "api": {
         "method": "get",
-        "url": "/monitor/cache?amisDebug=1",
+        "url": "/monitor/cache",
         "responseData": {
           "&": "${segment_buffer_cache_view}"
         }
