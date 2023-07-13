@@ -1,4 +1,4 @@
-FROM golang:1.16 AS builder
+FROM golang:1.18 AS builder
 
 COPY . /src
 WORKDIR /src
@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         && apt-get autoremove -y && apt-get autoclean -y
 
 COPY --from=builder /src/bin /app
+COPY --from=builder /src/configs/config.yaml /data/conf/config.yaml
 
 WORKDIR /app
 
