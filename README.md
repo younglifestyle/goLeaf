@@ -1,24 +1,31 @@
----
-typora-root-url: doc
-typora-copy-images-to: doc
----
-## 介绍
+# Leaf
 
-Go实现的号段模式以及雪花（Snowflake）发号器，基于Kratos框架，适用于此微服务框架以及服务发现服务
-
-gRPC访问性能与Leaf同
-
-> 增加流水号每天自动清零的功能(增加字段`auto_clean`，仅保证单节点用，Nginx Backup)
+> There are no two identical leaves in the world.
 >
-> 增加接口，支持远程添加号段tag；
->
-> 增加批量获取号段接口；
+> ​               — Leibnitz
+> 
+[中文文档](./README_zh.md) | [English Document](./README.md)
 
-## 使用
+## Introduce
 
-### 号段模式
 
-- 创建表
+A number segment pattern and Snowflake ID generator implemented in Go, based on the Kratos framework, suitable for this microservices framework and service discovery service.
+
+The gRPC access performance is on par with Leaf.
+
+> Add the functionality to automatically reset the serial number every day (add the `auto_clean` field, intended for single-node use, with Nginx backup).
+> 
+> Add an api to support remote addition of number segment tags.
+> 
+> Add an api for bulk retrieval of number segments.
+> 
+> Introduce a new UI interface that supports adding, viewing number segments, caching, and parsing Snowflake IDs.
+
+## Quick Start
+
+### Segment Pattern
+
+- table
 
 ```mysql
 CREATE DATABASE leaf;
@@ -37,7 +44,7 @@ CREATE TABLE `leaf_alloc` (
 insert into leaf_alloc(biz_tag, max_id, step, description) values('leaf-segment-test', 1, 2000, 'Test leaf Segment Mode Get Id');
 ```
 
-- 配置
+- config
 
 ```yaml
 data:
@@ -51,51 +58,51 @@ data:
     idle_timeout: 14400s
 ```
 
-- 启动服务
+- run
 
 ```
 make build
 bin/seq-server -conf configs/config.yaml
 ```
 
-- 请求接口
+- api
 
 ```
 curl http://localhost:8000/api/segment/get/leaf-segment-test
 
-// 查看cache中号段的状态
+// cache data
 http://localhost:8000/monitor/cache
-// 查看DB中号段的数据
+// db segment data
 http://localhost:8000/monitor/db
 ```
-### 雪花模式
+### Snowflake Pattern
 
-- 配置
+- config
 
 ```yaml
 data:
   etcd:
     snowflake_enable: true
-    # 启动联动其他leaf节点校验时间的功能
+    # Enabling the functionality to synchronize and validate time with other Leaf nodes.
     discovery_enable: false
     endpoints: ["127.0.0.1:2379"]
     dial_timeout: 2s
-    # discovery_enable开启时使用，服务节点时间的偏差
+    # When `discovery_enable` is enabled, the deviation in time among service nodes.
     time_deviation: 50
 ```
 
-- 请求接口
+- api
 
 ```
 curl http://localhost:8000/api/snowflake/get
 
-// 解析雪花ID
+// decode ID
 http://localhost:8000/decodeSnowflakeId
 ```
 
-### UI界面
+### UI
 
-访问地址：http:port/web
+addr：http:port/web
 
 > 例如：http://127.0.0.1:8001/web
 
