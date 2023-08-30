@@ -62,7 +62,7 @@ data:
 
 ```
 make build
-bin/seq-server -conf configs/config.yaml
+bin/goLeaf -conf configs/config.yaml
 ```
 
 - api
