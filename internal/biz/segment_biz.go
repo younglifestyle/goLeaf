@@ -67,9 +67,10 @@ type SegmentIdGenUsecase struct {
 // NewSegmentIdGenUsecase new a Segment usecase.
 func NewSegmentIdGenUsecase(repo SegmentIDGenRepo, conf *conf.Bootstrap, logger log.Logger) *SegmentIdGenUsecase {
 	s := &SegmentIdGenUsecase{
-		repo: repo,
-		conf: conf.Data,
-		log:  log.NewHelper(log.With(logger, "module", "leaf-grpc/segment"))}
+		repo:             repo,
+		conf:             conf.Data,
+		quickLoadSeqFlag: make(chan struct{}),
+		log:              log.NewHelper(log.With(logger, "module", "leaf-grpc/segment"))}
 
 	// 号段模式启用时，启动
 	if conf.Data.Database.SegmentEnable {
