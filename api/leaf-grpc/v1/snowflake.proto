@@ -13,7 +13,8 @@ service LeafSnowflakeService {
     // 雪花ID
     rpc GenSnowflakeId (IdRequest) returns (IdReply) {
         option (google.api.http) = {
-            get: "/api/v2/snowflake/get"
+            get: "/api/snowflake/get"
+            response_body: "id"
         };
     }
     // 解析雪花ID

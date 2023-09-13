@@ -12,7 +12,8 @@ service LeafSegmentService {
     // 号段模式, 返回是以{"id": ""}
     rpc GenSegmentId (IdRequest) returns (IdReply) {
         option (google.api.http) = {
-            get: "/api/v2/segment/get/{tag}"
+            get: "/api/segment/get/{tag}"
+            response_body: "id"
         };
     }
 
@@ -53,7 +54,7 @@ message IdRequest {
 
 // 申请到的ID
 message IdReply {
-    string id = 1;
+    int64 id = 1;
 }
 
 // 申请ID的BIZ Tag

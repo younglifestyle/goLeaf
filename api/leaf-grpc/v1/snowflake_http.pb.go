@@ -29,7 +29,7 @@ type LeafSnowflakeServiceHTTPServer interface {
 
 func RegisterLeafSnowflakeServiceHTTPServer(s *http.Server, srv LeafSnowflakeServiceHTTPServer) {
 	r := s.Route("/")
-	r.GET("/api/v2/snowflake/get", _LeafSnowflakeService_GenSnowflakeId0_HTTP_Handler(srv))
+	r.GET("/api/snowflake/get", _LeafSnowflakeService_GenSnowflakeId0_HTTP_Handler(srv))
 	r.GET("/decodeSnowflakeId", _LeafSnowflakeService_DecodeSnowflakeId0_HTTP_Handler(srv))
 }
 
@@ -48,7 +48,7 @@ func _LeafSnowflakeService_GenSnowflakeId0_HTTP_Handler(srv LeafSnowflakeService
 			return err
 		}
 		reply := out.(*IdReply)
-		return ctx.Result(200, reply)
+		return ctx.Result(200, reply.Id)
 	}
 }
 
@@ -99,11 +99,11 @@ func (c *LeafSnowflakeServiceHTTPClientImpl) DecodeSnowflakeId(ctx context.Conte
 
 func (c *LeafSnowflakeServiceHTTPClientImpl) GenSnowflakeId(ctx context.Context, in *IdRequest, opts ...http.CallOption) (*IdReply, error) {
 	var out IdReply
-	pattern := "/api/v2/snowflake/get"
+	pattern := "/api/snowflake/get"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationLeafSnowflakeServiceGenSnowflakeId))
 	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out.Id, opts...)
 	if err != nil {
 		return nil, err
 	}

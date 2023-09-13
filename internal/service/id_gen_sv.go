@@ -49,7 +49,7 @@ func (s *IdGenService) GenSnowflakeId(ctx context.Context, in *v1.IdRequest) (id
 		return &v1.IdReply{}, errors.Unwrap(err)
 	}
 
-	return &v1.IdReply{Id: strconv.FormatInt(id, 10)}, nil
+	return &v1.IdReply{Id: id}, nil
 }
 
 func (s *IdGenService) DecodeSnowflakeId(ctx context.Context, in *v1.DecodeSnowflakeIdReq) (snowflakeIdResp *v1.DecodeSnowflakeIdResp, err error) {
@@ -117,7 +117,7 @@ func (s *IdGenService) GenSegmentId(ctx context.Context, idRequest *v1.IdRequest
 		return &v1.IdReply{}, errors.Unwrap(err)
 	}
 
-	return &v1.IdReply{Id: strconv.FormatInt(id, 10)}, nil
+	return &v1.IdReply{Id: id}, nil
 }
 
 func (s *IdGenService) GenSegmentCache(ctx context.Context,
@@ -179,7 +179,7 @@ func (s *IdGenService) GetSegmentID(c *gin.Context) {
 		s.log.Error("get id error : ", id, err)
 		return
 	}
-	c.String(200, strconv.FormatInt(id, 10))
+	c.JSON(200, v1.IdReply{Id: id})
 }
 
 func (s *IdGenService) GetSnowflakeID(c *gin.Context) {
@@ -188,5 +188,5 @@ func (s *IdGenService) GetSnowflakeID(c *gin.Context) {
 		s.log.Error("get id error : ", id, err)
 		return
 	}
-	c.String(200, strconv.FormatInt(id, 10))
+	c.JSON(200, v1.IdReply{Id: id})
 }
