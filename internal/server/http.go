@@ -49,7 +49,7 @@ func NewHTTPServer(c *conf.Server, idGenService *service.IdGenService, metricMid
 	r.GET("/api/v2/snowflake/get", idGenService.GetSnowflakeID)
 	//r.Static("/web", "./web")
 	//r.Static("/pages", "./web/pages")
-	r.GET("/web1", func(c *gin.Context) {
+	r.GET("/web", func(c *gin.Context) {
 		data, err := staticFs.ReadFile("web/index.html")
 		if err != nil {
 			c.String(netHttp.StatusNotFound, "Frontend file not found")
