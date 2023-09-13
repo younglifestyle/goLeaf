@@ -1,6 +1,7 @@
 package server
 
 import (
+	"embed"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -11,7 +12,11 @@ import (
 	v1 "goLeaf/api/leaf-grpc/v1"
 	"goLeaf/internal/conf"
 	"goLeaf/internal/service"
+	netHttp "net/http"
 )
+
+//go:embed all:web
+var staticFs embed.FS
 
 // NewHTTPServer new a HTTP server.
 func NewHTTPServer(c *conf.Server, idGenService *service.IdGenService, metricMidSrv middleware.Middleware, logger log.Logger) *http.Server {
@@ -42,8 +47,25 @@ func NewHTTPServer(c *conf.Server, idGenService *service.IdGenService, metricMid
 	r := gin.Default()
 	r.GET("/api/v2/segment/get/:tag", idGenService.GetSegmentID)
 	r.GET("/api/v2/snowflake/get", idGenService.GetSnowflakeID)
-	r.Static("/web", "./web")
-	r.Static("/pages", "./web/pages")
+	//r.Static("/web", "./web")
+	//r.Static("/pages", "./web/pages")
+	r.GET("/web1", func(c *gin.Context) {
+		data, err := staticFs.ReadFile("web/index.html")
+		if err != nil {
+			c.String(netHttp.StatusNotFound, "Frontend file not found")
+			return
+		}
+		c.Data(netHttp.StatusOK, "text/html; charset=utf-8", data)
+	})
+	r.GET("/pages/:filename", func(c *gin.Context) {
+		filename := c.Param("filename")
+		data, err := staticFs.ReadFile("web/pages/" + filename)
+		if err != nil {
+			c.String(netHttp.StatusNotFound, "Frontend file not found")
+			return
+		}
+		c.String(netHttp.StatusOK, string(data))
+	})
 	srv.HandlePrefix("/", r)
 
 	return srv

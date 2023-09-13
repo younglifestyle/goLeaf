@@ -21,7 +21,7 @@ service LeafSegmentService {
     rpc GenSegmentCache (IdRequest) returns (SegmentBufferCacheViews) {
         option (google.api.http) = {
             get: "/monitor/cache"
-            response_body: "segment_buffer_cache_view"
+            response_body: "*"
         };
     }
 

@@ -79,7 +79,7 @@ func _LeafSegmentService_GenSegmentCache0_HTTP_Handler(srv LeafSegmentServiceHTT
 			return err
 		}
 		reply := out.(*SegmentBufferCacheViews)
-		return ctx.Result(200, reply.SegmentBufferCacheView)
+		return ctx.Result(200, reply)
 	}
 }
 
@@ -136,7 +136,7 @@ func _LeafSegmentService_GenSegmentIds0_HTTP_Handler(srv LeafSegmentServiceHTTPS
 			return err
 		}
 		reply := out.(*GenSegmentIdsReply)
-		return ctx.Result(200, reply.Ids)
+		return ctx.Result(200, reply)
 	}
 }
 
@@ -175,7 +175,7 @@ func (c *LeafSegmentServiceHTTPClientImpl) GenSegmentCache(ctx context.Context, 
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationLeafSegmentServiceGenSegmentCache))
 	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "GET", path, nil, &out.SegmentBufferCacheView, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +214,7 @@ func (c *LeafSegmentServiceHTTPClientImpl) GenSegmentIds(ctx context.Context, in
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationLeafSegmentServiceGenSegmentIds))
 	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "GET", path, nil, &out.Ids, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {
 		return nil, err
 	}
