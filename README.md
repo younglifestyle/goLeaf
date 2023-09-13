@@ -13,12 +13,14 @@ A number segment pattern and Snowflake ID generator implemented in Go, based on 
 
 The gRPC access performance is on par with Leaf.
 
+> Interface compatible with Leaf, can be directly replaced
+>
 > Add the functionality to automatically reset the serial number every day (add the `auto_clean` field, intended for single-node use, with Nginx backup).
-> 
+>
 > Add an api to support remote addition of number segment tags.
-> 
+>
 > Add an api for bulk retrieval of number segments.
-> 
+>
 > Introduce a new UI interface that supports adding, viewing number segments, caching, and parsing Snowflake IDs.
 
 ## Quick Start
