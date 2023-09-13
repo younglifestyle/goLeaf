@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LeafSegmentServiceClient interface {
-	// 号段模式
+	// 号段模式, 返回是以{"id": ""}
 	GenSegmentId(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*IdReply, error)
 	// monitor
 	GenSegmentCache(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*SegmentBufferCacheViews, error)
@@ -89,7 +89,7 @@ func (c *leafSegmentServiceClient) GenSegmentIds(ctx context.Context, in *GenSeg
 // All implementations must embed UnimplementedLeafSegmentServiceServer
 // for forward compatibility
 type LeafSegmentServiceServer interface {
-	// 号段模式
+	// 号段模式, 返回是以{"id": ""}
 	GenSegmentId(context.Context, *IdRequest) (*IdReply, error)
 	// monitor
 	GenSegmentCache(context.Context, *IdRequest) (*SegmentBufferCacheViews, error)

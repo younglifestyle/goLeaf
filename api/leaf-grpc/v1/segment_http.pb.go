@@ -35,7 +35,7 @@ type LeafSegmentServiceHTTPServer interface {
 
 func RegisterLeafSegmentServiceHTTPServer(s *http.Server, srv LeafSegmentServiceHTTPServer) {
 	r := s.Route("/")
-	r.GET("/api/segment/get/{tag}", _LeafSegmentService_GenSegmentId0_HTTP_Handler(srv))
+	r.GET("/api/v2/segment/get/{tag}", _LeafSegmentService_GenSegmentId0_HTTP_Handler(srv))
 	r.GET("/monitor/cache", _LeafSegmentService_GenSegmentCache0_HTTP_Handler(srv))
 	r.GET("/monitor/db", _LeafSegmentService_GenSegmentDb0_HTTP_Handler(srv))
 	r.POST("/api/segment/info", _LeafSegmentService_CreateSegmentId0_HTTP_Handler(srv))
@@ -79,7 +79,7 @@ func _LeafSegmentService_GenSegmentCache0_HTTP_Handler(srv LeafSegmentServiceHTT
 			return err
 		}
 		reply := out.(*SegmentBufferCacheViews)
-		return ctx.Result(200, reply)
+		return ctx.Result(200, reply.SegmentBufferCacheView)
 	}
 }
 
@@ -175,7 +175,7 @@ func (c *LeafSegmentServiceHTTPClientImpl) GenSegmentCache(ctx context.Context, 
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationLeafSegmentServiceGenSegmentCache))
 	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out.SegmentBufferCacheView, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +197,7 @@ func (c *LeafSegmentServiceHTTPClientImpl) GenSegmentDb(ctx context.Context, in 
 
 func (c *LeafSegmentServiceHTTPClientImpl) GenSegmentId(ctx context.Context, in *IdRequest, opts ...http.CallOption) (*IdReply, error) {
 	var out IdReply
-	pattern := "/api/segment/get/{tag}"
+	pattern := "/api/v2/segment/get/{tag}"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationLeafSegmentServiceGenSegmentId))
 	opts = append(opts, http.PathTemplate(pattern))

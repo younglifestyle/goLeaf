@@ -40,7 +40,8 @@ func NewHTTPServer(c *conf.Server, idGenService *service.IdGenService, metricMid
 	v1.RegisterLeafSnowflakeServiceHTTPServer(srv, idGenService)
 
 	r := gin.Default()
-	//r.Static("/sdk", "./web/sdk")
+	r.GET("/api/segment/get/:tag", idGenService.GetSegmentID)
+	r.GET("/api/snowflake/get", idGenService.GetSnowflakeID)
 	r.Static("/web", "./web")
 	r.Static("/pages", "./web/pages")
 	srv.HandlePrefix("/", r)

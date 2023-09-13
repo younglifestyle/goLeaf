@@ -9,10 +9,10 @@ option go_package = "goLeaf/api/leaf-grpc/v1;v1";
 // Leaf ID生成
 service LeafSegmentService {
 
-    // 号段模式
+    // 号段模式, 返回是以{"id": ""}
     rpc GenSegmentId (IdRequest) returns (IdReply) {
         option (google.api.http) = {
-            get: "/api/segment/get/{tag}"
+            get: "/api/v2/segment/get/{tag}"
         };
     }
 

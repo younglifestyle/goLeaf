@@ -6,31 +6,6 @@ info:
     title: ""
     version: 0.0.1
 paths:
-    /api/segment/get/{tag}:
-        get:
-            tags:
-                - LeafSegmentService
-            description: 号段模式
-            operationId: LeafSegmentService_GenSegmentId
-            parameters:
-                - name: tag
-                  in: path
-                  required: true
-                  schema:
-                    type: string
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/IdReply'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
     /api/segment/ids:
         get:
             tags:
@@ -84,7 +59,32 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /api/snowflake/get:
+    /api/v2/segment/get/{tag}:
+        get:
+            tags:
+                - LeafSegmentService
+            description: '号段模式, 返回是以{"id": ""}'
+            operationId: LeafSegmentService_GenSegmentId
+            parameters:
+                - name: tag
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/IdReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/v2/snowflake/get:
         get:
             tags:
                 - LeafSnowflakeService

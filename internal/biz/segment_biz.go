@@ -288,8 +288,8 @@ func (uc *SegmentIdGenUsecase) getIdFromSegmentBuffer(ctx context.Context, cache
 			if value < segment.GetMax() { // 成功返回
 				return value
 			}
-			return 0
-		}(); value != 0 {
+			return -1
+		}(); value != -1 {
 			return value, nil
 		}
 
@@ -316,11 +316,11 @@ func (uc *SegmentIdGenUsecase) getIdFromSegmentBuffer(ctx context.Context, cache
 				cacheSegmentBuffer.SwitchPos()
 				cacheSegmentBuffer.SetNextReady(false)
 			} else { // 如果另一个Segment没有准备好，则返回异常双buffer全部用完
-				return 0, ErrIDTwoSegmentsAreNull
+				return -1, ErrIDTwoSegmentsAreNull
 			}
-			return 0, nil
+			return -1, nil
 		}()
-		if value != 0 || err != nil {
+		if value != -1 || err != nil {
 			return value, err
 		}
 	}
