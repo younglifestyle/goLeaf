@@ -134,13 +134,13 @@ func (uc *SegmentIdGenUsecase) GetSegID(ctx context.Context, tag string) (int64,
 				return
 			})
 			if err != nil {
-				return 0, err
+				return -1, err
 			}
 		}
 
 		return uc.getIdFromSegmentBuffer(ctx, segmentBuffer)
 	} else {
-		return 0, nil
+		return -1, nil
 	}
 }
 
@@ -328,7 +328,7 @@ func (uc *SegmentIdGenUsecase) getIdFromSegmentBuffer(ctx context.Context, cache
 
 // loadProc 定时1min同步一次db和cache
 func (uc *SegmentIdGenUsecase) loadProc() {
-	autoCleanTimer := time.NewTimer(mytime.CalcZeroTime())
+	autoCleanTimer := time.NewTicker(mytime.CalcZeroTime())
 	ticker := time.NewTicker(time.Minute)
 
 	for {
@@ -339,9 +339,9 @@ func (uc *SegmentIdGenUsecase) loadProc() {
 			_ = uc.loadSeqs()
 			ticker.Reset(time.Minute)
 		case <-autoCleanTimer.C:
+			autoCleanTimer.Reset(time.Hour * 24)
 			// 零点执行auto clean
 			_ = uc.autoCleanSeqs()
-			autoCleanTimer = time.NewTimer(time.Hour * 24)
 		}
 	}
 }
@@ -407,10 +407,11 @@ func (uc *SegmentIdGenUsecase) autoCleanSeqs() (err error) {
 
 	uc.cache.Range(func(k, v interface{}) bool {
 		segmentBuffer := v.(*model.SegmentBuffer)
-		if segmentBuffer.AutoClean {
-			needCleanBizTags = append(needCleanBizTags, segmentBuffer.BizKey)
+		if !segmentBuffer.AutoClean {
+			return true
 		}
 
+		needCleanBizTags = append(needCleanBizTags, segmentBuffer.BizKey)
 		func() {
 			segmentBuffer.WLock()
 			defer segmentBuffer.WUnLock()
@@ -423,10 +424,12 @@ func (uc *SegmentIdGenUsecase) autoCleanSeqs() (err error) {
 		return true
 	})
 
-	err = uc.repo.CleanLeafMaxId(context.Background(), needCleanBizTags)
-	if err != nil {
-		log.Error("update tags max id to start id error : ", err)
-		return err
+	if len(needCleanBizTags) != 0 {
+		err = uc.repo.CleanLeafMaxId(context.Background(), needCleanBizTags)
+		if err != nil {
+			log.Error("update tags max id to start id error : ", err)
+			return err
+		}
 	}
 
 	return nil
