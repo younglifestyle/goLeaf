@@ -80,6 +80,7 @@ message SegmentBufferCacheView {
     int32 pos = 8;
     bool next_ready = 9;
     bool init_ok = 10;
+    bool auto_clean = 11;
 }
 
 message SegmentBufferCacheViews {

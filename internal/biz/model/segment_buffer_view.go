@@ -11,4 +11,5 @@ type SegmentBufferView struct {
 	Pos       int
 	NextReady bool
 	InitOk    bool
+	AutoClean bool
 }

@@ -276,6 +276,8 @@ components:
                     type: boolean
                 initOk:
                     type: boolean
+                autoClean:
+                    type: boolean
             description: 字段模式在内存中的各项数据
         SegmentBufferCacheViews:
             type: object

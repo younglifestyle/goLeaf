@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/robfig/cron"
 	"go.uber.org/atomic"
 	v1 "goLeaf/api/leaf-grpc/v1"
 	"goLeaf/internal/biz/model"
 	"goLeaf/internal/conf"
-	mytime "goLeaf/internal/pkg/time"
 	"golang.org/x/sync/singleflight"
 	"sync"
 	"time"
@@ -75,6 +75,7 @@ func NewSegmentIdGenUsecase(repo SegmentIDGenRepo, conf *conf.Bootstrap, logger 
 	// 号段模式启用时，启动
 	if conf.Data.Database.SegmentEnable {
 		_ = s.loadSeqs()
+		s.autoCleanProc()
 		go s.loadProc()
 	}
 
@@ -98,6 +99,7 @@ func (uc *SegmentIdGenUsecase) Cache(ctx context.Context) ([]*model.SegmentBuffe
 		bv.Key = segBuff.GetKey()
 		bv.Pos = segBuff.GetCurrentPos()
 		bv.NextReady = segBuff.IsNextReady()
+		bv.AutoClean = segBuff.AutoClean
 		segments := segBuff.GetSegments()
 		bv.Max0 = segments[0].GetMax()
 		bv.Value0 = segments[0].GetValue().Load()
@@ -184,6 +186,7 @@ func (uc *SegmentIdGenUsecase) updateSegmentFromDb(ctx context.Context, bizTag s
 		}
 		segmentBuffer.SetUpdateTimeStamp(time.Now().Unix())
 		segmentBuffer.SetMinStep(leafAlloc.Step)
+		segmentBuffer.SetAutoClean(leafAlloc.AutoClean)
 	} else {
 		// 第三次以及之后的进来 动态设置nextStep
 		// 计算当前更新操作和上一次更新时间差
@@ -224,6 +227,7 @@ func (uc *SegmentIdGenUsecase) updateSegmentFromDb(ctx context.Context, bizTag s
 		segmentBuffer.SetUpdateTimeStamp(time.Now().Unix())
 		segmentBuffer.SetStep(nextStep)
 		segmentBuffer.SetMinStep(leafAlloc.Step)
+		segmentBuffer.SetAutoClean(leafAlloc.AutoClean)
 	}
 
 	value := leafAlloc.MaxId - int64(segmentBuffer.GetStep())
@@ -328,7 +332,6 @@ func (uc *SegmentIdGenUsecase) getIdFromSegmentBuffer(ctx context.Context, cache
 
 // loadProc 定时1min同步一次db和cache
 func (uc *SegmentIdGenUsecase) loadProc() {
-	autoCleanTimer := time.NewTicker(mytime.CalcZeroTime())
 	ticker := time.NewTicker(time.Minute)
 
 	for {
@@ -338,12 +341,21 @@ func (uc *SegmentIdGenUsecase) loadProc() {
 		case <-uc.quickLoadSeqFlag:
 			_ = uc.loadSeqs()
 			ticker.Reset(time.Minute)
-		case <-autoCleanTimer.C:
-			autoCleanTimer.Reset(time.Hour * 24)
-			// 零点执行auto clean
-			_ = uc.autoCleanSeqs()
 		}
 	}
+}
+
+// 添加一个每天 0 点 0 分 0 秒执行的清零定时任务  0 0 0 * * *  0/5 * * * * *
+func (uc *SegmentIdGenUsecase) autoCleanProc() {
+	c := cron.New()
+	err := c.AddFunc("0 0 0 * * *", func() {
+		_ = uc.autoCleanSeqs()
+	})
+	if err != nil {
+		log.Errorf("Failed to add auto clean cron job : ", err)
+		return
+	}
+	c.Start()
 }
 
 func (uc *SegmentIdGenUsecase) loadSeqs() (err error) {

@@ -141,6 +141,7 @@ func (s *IdGenService) GenSegmentCache(ctx context.Context,
 		segbuff.Max1 = view.Max1
 		segbuff.Value1 = view.Value1
 		segbuff.Step1 = int32(view.Step1)
+		segbuff.AutoClean = view.AutoClean
 		segbuffViews.SegmentBufferCacheView = append(segbuffViews.SegmentBufferCacheView, segbuff)
 	}
 

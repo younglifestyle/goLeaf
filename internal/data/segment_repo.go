@@ -17,7 +17,7 @@ type SegmentIdGenRepoIml struct {
 
 func (s *SegmentIdGenRepoIml) CleanLeafMaxId(ctx context.Context, tags []string) (err error) {
 	err = s.data.db.Table(s.data.tableName).WithContext(ctx).
-		Where("biz_tag IN ?", tags).Update("max_id", 1).Error
+		Where("biz_tag IN ?", tags).Update("max_id", 0).Error
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,8 @@ func (s *SegmentIdGenRepoIml) UpdateAndGetMaxId(ctx context.Context, tag string)
 		}
 
 		if err = tx.Table(s.data.tableName).Select("biz_tag",
-			"max_id", "step").Where("biz_tag = ?", tag).First(&leafAlloc).Error; err != nil {
+			"max_id", "step", "auto_clean").
+			Where("biz_tag = ?", tag).First(&leafAlloc).Error; err != nil {
 
 			return err
 		}
@@ -103,7 +104,7 @@ func (s *SegmentIdGenRepoIml) UpdateMaxIdByCustomStepAndGetLeafAlloc(ctx context
 		}
 
 		if err = tx.Table(s.data.tableName).Select("biz_tag",
-			"max_id", "step").Where("biz_tag = ?", tag).First(&leafAlloc).Error; err != nil {
+			"max_id", "step", "auto_clean").Where("biz_tag = ?", tag).First(&leafAlloc).Error; err != nil {
 
 			return err
 		}
