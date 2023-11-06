@@ -102,10 +102,10 @@ func (uc *SegmentIdGenUsecase) Cache(ctx context.Context) ([]*model.SegmentBuffe
 		bv.AutoClean = segBuff.AutoClean
 		segments := segBuff.GetSegments()
 		bv.Max0 = segments[0].GetMax()
-		bv.Value0 = segments[0].GetValue().Load()
+		bv.Value0 = segments[0].GetValue()
 		bv.Step0 = segments[0].GetStep()
 		bv.Max1 = segments[1].GetMax()
-		bv.Value1 = segments[1].GetValue().Load()
+		bv.Value1 = segments[1].GetValue()
 		bv.Step1 = segments[1].GetStep()
 		bufferViews = append(bufferViews, bv)
 		return true
@@ -231,7 +231,7 @@ func (uc *SegmentIdGenUsecase) updateSegmentFromDb(ctx context.Context, bizTag s
 	}
 
 	value := leafAlloc.MaxId - int64(segmentBuffer.GetStep())
-	segment.GetValue().Store(value)
+	segment.SetValue(value)
 	segment.SetMax(leafAlloc.MaxId)
 	segment.SetStep(segmentBuffer.GetStep())
 
@@ -287,8 +287,7 @@ func (uc *SegmentIdGenUsecase) getIdFromSegmentBuffer(ctx context.Context, cache
 				go uc.loadNextSegmentFromDb(context.TODO(), cacheSegmentBuffer)
 			}
 
-			value = segment.GetValue().Load()
-			segment.GetValue().Inc()
+			value = segment.Inc()
 			if value < segment.GetMax() { // 成功返回
 				return value
 			}
@@ -307,8 +306,7 @@ func (uc *SegmentIdGenUsecase) getIdFromSegmentBuffer(ctx context.Context, cache
 
 			// 重复获取value, 并发执行时，Segment可能已经被其他协程切换。再次判断, 防止重复切换Segment
 			segment = cacheSegmentBuffer.GetCurrent()
-			value = segment.GetValue().Load()
-			segment.GetValue().Inc()
+			value = segment.Inc()
 			if value < segment.GetMax() { // 成功返回
 				return value, nil
 			}
@@ -390,7 +388,7 @@ func (uc *SegmentIdGenUsecase) loadSeqs() (err error) {
 		segmentBuffer := model.NewSegmentBuffer()
 		segmentBuffer.SetKey(k)
 		segment := segmentBuffer.GetCurrent()
-		segment.SetValue(atomic.NewInt64(0))
+		segment.SetValue(0)
 		segment.SetMax(0)
 		segment.SetStep(0)
 		uc.cache.Store(k, segmentBuffer)
