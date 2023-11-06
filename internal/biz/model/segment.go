@@ -25,14 +25,12 @@ func NewSegment(segmentBuffer *SegmentBuffer) *Segment {
 	return s
 }
 
-func (s *Segment) GetValue() int64 {
-	return s.Value.Load()
+func (s *Segment) GetValue() *atomic.Int64 {
+	return s.Value
 }
-func (s *Segment) Inc() int64 {
-	return s.Value.Inc()
-}
-func (s *Segment) SetValue(value int64) {
-	s.Value.Store(value)
+
+func (s *Segment) SetValue(value *atomic.Int64) {
+	s.Value = value
 }
 
 func (s *Segment) GetMax() int64 {
@@ -52,7 +50,7 @@ func (s *Segment) SetStep(step int) {
 }
 
 func (s *Segment) GetIdle() int64 {
-	value := s.Value.Load()
+	value := s.GetValue().Load()
 	return s.GetMax() - value
 }
 
