@@ -45,10 +45,6 @@ func NewHTTPServer(c *conf.Server, idGenService *service.IdGenService, metricMid
 	v1.RegisterLeafSnowflakeServiceHTTPServer(srv, idGenService)
 
 	r := gin.Default()
-	r.GET("/api/v2/segment/get/:tag", idGenService.GetSegmentID)
-	r.GET("/api/v2/snowflake/get", idGenService.GetSnowflakeID)
-	//r.Static("/web", "./web")
-	//r.Static("/pages", "./web/pages")
 	r.GET("/web", func(c *gin.Context) {
 		data, err := staticFs.ReadFile("web/index.html")
 		if err != nil {

@@ -14,6 +14,9 @@ service LeafSegmentService {
         option (google.api.http) = {
             get: "/api/segment/get/{tag}"
             response_body: "id"
+            additional_bindings: {
+                get: "/api/v2/segment/get/{tag}"
+            }
         };
     }
 

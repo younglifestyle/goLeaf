@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -170,24 +169,4 @@ func (s *IdGenService) GenSegmentDb(ctx context.Context, in *v1.IdRequest) (leaf
 	}
 
 	return
-}
-
-func (s *IdGenService) GetSegmentID(c *gin.Context) {
-	tag := c.Param("tag")
-
-	id, err := s.segmentIdGenUsecase.GetSegID(c, tag)
-	if err != nil {
-		s.log.Error("get id error : ", id, err)
-		return
-	}
-	c.JSON(200, v1.IdReply{Id: id})
-}
-
-func (s *IdGenService) GetSnowflakeID(c *gin.Context) {
-	id, err := s.snowflakeIdGenUsecase.GetSnowflakeID(c)
-	if err != nil {
-		s.log.Error("get id error : ", id, err)
-		return
-	}
-	c.JSON(200, v1.IdReply{Id: id})
 }

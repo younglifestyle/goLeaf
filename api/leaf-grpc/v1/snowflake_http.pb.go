@@ -29,11 +29,31 @@ type LeafSnowflakeServiceHTTPServer interface {
 
 func RegisterLeafSnowflakeServiceHTTPServer(s *http.Server, srv LeafSnowflakeServiceHTTPServer) {
 	r := s.Route("/")
-	r.GET("/api/snowflake/get", _LeafSnowflakeService_GenSnowflakeId0_HTTP_Handler(srv))
+	r.GET("/api/v2/snowflake/get", _LeafSnowflakeService_GenSnowflakeId0_HTTP_Handler(srv))
+	r.GET("/api/snowflake/get", _LeafSnowflakeService_GenSnowflakeId1_HTTP_Handler(srv))
 	r.GET("/decodeSnowflakeId", _LeafSnowflakeService_DecodeSnowflakeId0_HTTP_Handler(srv))
 }
 
 func _LeafSnowflakeService_GenSnowflakeId0_HTTP_Handler(srv LeafSnowflakeServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in IdRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationLeafSnowflakeServiceGenSnowflakeId)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GenSnowflakeId(ctx, req.(*IdRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*IdReply)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _LeafSnowflakeService_GenSnowflakeId1_HTTP_Handler(srv LeafSnowflakeServiceHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in IdRequest
 		if err := ctx.BindQuery(&in); err != nil {
