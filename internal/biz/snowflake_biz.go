@@ -100,10 +100,10 @@ func (uc *SnowflakeIdGenUsecase) GetSnowflakeID(ctx context.Context) (int64, err
 				// 重新获取当前时间戳，理论上这次应该比上一次记录的时间戳迟了
 				ts = time.Now().UnixMilli()
 				if ts < uc.lastTimestamp {
-					return 0, ErrSnowflakeTimeException
+					return 0, fmt.Errorf("%s, %w", "time deviation :", ErrSnowflakeTimeException)
 				}
 			} else {
-				return 0, ErrSnowflakeTimeException
+				return 0, fmt.Errorf("%s, %w", "GetSnowflakeID error :", ErrSnowflakeTimeException)
 			}
 		}
 

@@ -119,7 +119,7 @@ func (uc *SegmentIdGenUsecase) GetSegID(ctx context.Context, tag string) (int64,
 	if uc.conf.Database.SegmentEnable {
 		value, ok := uc.cache.Load(tag)
 		if !ok {
-			return 0, ErrTagNotFound
+			return 0, fmt.Errorf("get segment id : %w", ErrTagNotFound)
 		}
 		segmentBuffer := value.(*model.SegmentBuffer)
 		if !segmentBuffer.IsInitOk() {
@@ -318,7 +318,7 @@ func (uc *SegmentIdGenUsecase) getIdFromSegmentBuffer(ctx context.Context, cache
 				cacheSegmentBuffer.SwitchPos()
 				cacheSegmentBuffer.SetNextReady(false)
 			} else { // 如果另一个Segment没有准备好，则返回异常双buffer全部用完
-				return -1, ErrIDTwoSegmentsAreNull
+				return -1, fmt.Errorf("getIdFromSegmentBuffer error : %w", ErrIDTwoSegmentsAreNull)
 			}
 			return -1, nil
 		}()
