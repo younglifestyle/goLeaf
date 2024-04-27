@@ -38,7 +38,7 @@ type SegmentIDGenRepo interface {
 	UpdateAndGetMaxId(ctx context.Context, tag string) (seg model.LeafAlloc, err error)
 	GetLeafAlloc(ctx context.Context, tag string) (seg model.LeafAlloc, err error)
 	GetAllTags(ctx context.Context) (tags []string, err error)
-	GetAllLeafAllocs(ctx context.Context) (leafs []*model.LeafAlloc, err error)
+	GetAllLeafAllocs(ctx context.Context, tag string) (leafs []*model.LeafAlloc, err error)
 	UpdateMaxIdByCustomStepAndGetLeafAlloc(ctx context.Context, tag string, step int) (leafAlloc model.LeafAlloc, err error)
 
 	CleanLeafMaxId(ctx context.Context, tags []string) (err error)
@@ -82,34 +82,47 @@ func NewSegmentIdGenUsecase(repo SegmentIDGenRepo, conf *conf.Bootstrap, logger 
 	return s
 }
 
-func (uc *SegmentIdGenUsecase) GetAllLeafs(ctx context.Context) ([]*model.LeafAlloc, error) {
+func (uc *SegmentIdGenUsecase) GetAllLeafs(ctx context.Context, tag string) ([]*model.LeafAlloc, error) {
 	if uc.conf.Database.SegmentEnable {
-		return uc.repo.GetAllLeafAllocs(ctx)
+		return uc.repo.GetAllLeafAllocs(ctx, tag)
 	} else {
 		return nil, nil
 	}
 }
 
-func (uc *SegmentIdGenUsecase) Cache(ctx context.Context) ([]*model.SegmentBufferView, error) {
+func (uc *SegmentIdGenUsecase) createSegmentBufferView(segBuff *model.SegmentBuffer) *model.SegmentBufferView {
+	bv := &model.SegmentBufferView{}
+	bv.InitOk = segBuff.IsInitOk()
+	bv.Key = segBuff.GetKey()
+	bv.Pos = segBuff.GetCurrentPos()
+	bv.NextReady = segBuff.IsNextReady()
+	bv.AutoClean = segBuff.AutoClean
+	segments := segBuff.GetSegments()
+	bv.Max0 = segments[0].GetMax()
+	bv.Value0 = segments[0].GetValue()
+	bv.Step0 = segments[0].GetStep()
+	bv.Max1 = segments[1].GetMax()
+	bv.Value1 = segments[1].GetValue()
+	bv.Step1 = segments[1].GetStep()
+	return bv
+}
+
+func (uc *SegmentIdGenUsecase) Cache(ctx context.Context, tag string) ([]*model.SegmentBufferView, error) {
 	bufferViews := []*model.SegmentBufferView{}
-	uc.cache.Range(func(k, v interface{}) bool {
-		segBuff := v.(*model.SegmentBuffer)
-		bv := &model.SegmentBufferView{}
-		bv.InitOk = segBuff.IsInitOk()
-		bv.Key = segBuff.GetKey()
-		bv.Pos = segBuff.GetCurrentPos()
-		bv.NextReady = segBuff.IsNextReady()
-		bv.AutoClean = segBuff.AutoClean
-		segments := segBuff.GetSegments()
-		bv.Max0 = segments[0].GetMax()
-		bv.Value0 = segments[0].GetValue()
-		bv.Step0 = segments[0].GetStep()
-		bv.Max1 = segments[1].GetMax()
-		bv.Value1 = segments[1].GetValue()
-		bv.Step1 = segments[1].GetStep()
-		bufferViews = append(bufferViews, bv)
-		return true
-	})
+	if tag == "" {
+		uc.cache.Range(func(k, v interface{}) bool {
+			segBuff := v.(*model.SegmentBuffer)
+			bufferViews = append(bufferViews, uc.createSegmentBufferView(segBuff))
+			return true
+		})
+	} else {
+		value, ok := uc.cache.Load(tag)
+		if !ok {
+			return nil, nil
+		}
+		segBuff := value.(*model.SegmentBuffer)
+		bufferViews = append(bufferViews, uc.createSegmentBufferView(segBuff))
+	}
 
 	return bufferViews, nil
 }

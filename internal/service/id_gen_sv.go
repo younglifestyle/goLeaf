@@ -123,7 +123,7 @@ func (s *IdGenService) GenSegmentCache(ctx context.Context,
 	idRequest *v1.IdRequest) (segbuffViews *v1.SegmentBufferCacheViews, err error) {
 	segbuffViews = &v1.SegmentBufferCacheViews{}
 
-	bufferViews, err := s.segmentIdGenUsecase.Cache(ctx)
+	bufferViews, err := s.segmentIdGenUsecase.Cache(ctx, idRequest.Tag)
 	if err != nil {
 		s.log.Error("get segment cache error : ", err)
 		return
@@ -150,7 +150,7 @@ func (s *IdGenService) GenSegmentCache(ctx context.Context,
 func (s *IdGenService) GenSegmentDb(ctx context.Context, in *v1.IdRequest) (leafs *v1.LeafAllocDbs, err error) {
 	leafs = &v1.LeafAllocDbs{}
 
-	allLeafs, err := s.segmentIdGenUsecase.GetAllLeafs(ctx)
+	allLeafs, err := s.segmentIdGenUsecase.GetAllLeafs(ctx, in.Tag)
 	if err != nil {
 		s.log.Error("get segment db error : ", err)
 		return

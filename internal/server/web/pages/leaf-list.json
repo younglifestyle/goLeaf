@@ -3,81 +3,108 @@
   "title": "DB段查询",
   "remark": null,
   "name": "号段查询",
-  "toolbar": [
-    {
-      "type": "action",
-      "align": "right",
-      "label": "新增",
-      "primary": true,
-      "actionType": "dialog",
-      "dialog": {
-        "title": "新增号段",
-        "body": {
-          "type": "form",
-          "api": "post:/api/segment/info",
-          "body": [
-            {
-              "type": "input-text",
-              "name": "biz_tag",
-              "label": "号段名",
-              "required": true
-            },
-            {
-              "type": "input-number",
-              "name": "max_id",
-              "label": "起始ID",
-              "required": true,
-              "showSteps": false
-            },
-            {
-              "type": "input-number",
-              "name": "step",
-              "label": "step",
-              "required": true,
-              "showSteps": false
-            },
-            {
-              "type": "input-text",
-              "name": "description",
-              "label": "描述"
-            },
-            {
-              "name": "auto_clean",
-              "type": "radios",
-              "label": "每日0点清零",
-              "selectFirst": true,
-              "options": [
-                {
-                  "label": "否",
-                  "value": false
-                },
-                {
-                  "label": "是",
-                  "value": true
-                }
-              ]
-            }
-          ]
-        }
-      }
-    },
-    {
-      "type": "action",
-      "align": "right",
-      "label": "刷新",
-      "api": "get:/monitor/db",
-      "primary": true,
-      "actionType": "reload",
-      "target": "crud"
-    }
-  ],
   "body": [
     {
       "type": "crud",
       "name": "crud",
       "api": "/monitor/db",
       "loadDataOnce": true,
-      "filter": null,
+      "syncLocation": false,
+      "filter": {
+        "title": "条件搜索",
+        "controls": [
+          {
+            "type": "tpl",
+            "tpl": "号段名: "
+          },
+          {
+            "type": "input-text",
+            "name": "tag",
+            "placeholder": "通过号段搜索",
+            "trimContents": true,
+            "clearable": true
+          }
+        ],
+        "actions": [
+          {
+            "type": "action",
+            "align": "right",
+            "label": "新增",
+            "primary": true,
+            "actionType": "dialog",
+            "dialog": {
+              "title": "新增号段",
+              "body": {
+                "type": "form",
+                "api": "post:/api/segment/info",
+                "body": [
+                  {
+                    "type": "input-text",
+                    "name": "biz_tag",
+                    "label": "号段名",
+                    "required": true
+                  },
+                  {
+                    "type": "input-number",
+                    "name": "max_id",
+                    "label": "起始ID",
+                    "required": true,
+                    "showSteps": false
+                  },
+                  {
+                    "type": "input-number",
+                    "name": "step",
+                    "label": "step",
+                    "required": true,
+                    "showSteps": false
+                  },
+                  {
+                    "type": "input-text",
+                    "name": "description",
+                    "label": "描述"
+                  },
+                  {
+                    "name": "auto_clean",
+                    "type": "radios",
+                    "label": "每日0点清零",
+                    "selectFirst": true,
+                    "options": [
+                      {
+                        "label": "否",
+                        "value": false
+                      },
+                      {
+                        "label": "是",
+                        "value": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "type": "action",
+            "align": "right",
+            "label": "刷新",
+            "api": "get:/monitor/db",
+            "primary": true,
+            "actionType": "reload",
+            "target": "crud"
+          },
+          {
+            "type": "reset",
+            "label": "重置",
+            "primary": true
+          },
+          {
+            "type": "button",
+            "label": "查询",
+            "level": "primary",
+            "actionType": "submit"
+          }
+        ]
+      },
       "columns": [
         {
           "name": "biz_tag",
@@ -97,7 +124,9 @@
         },
         {
           "name": "auto_clean",
-          "label": "自动清零"
+          "type": "static",
+          "label": "每日0点清零",
+          "value": "否"
         },
         {
           "type": "date",
@@ -116,13 +145,7 @@
       ],
       "affixHeader": true,
       "columnsTogglable": false,
-      "placeholder": "暂无数据",
-      "tableClassName": "table-db table-striped",
-      "headerClassName": "crud-table-header",
-      "footerClassName": "crud-table-footer",
-      "toolbarClassName": "crud-table-toolbar",
-      "combineNum": 0,
-      "bodyClassName": "panel-default"
+      "placeholder": "暂无数据"
     }
   ]
 }

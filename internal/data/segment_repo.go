@@ -39,10 +39,12 @@ func (s *SegmentIdGenRepoIml) SaveLeafAlloc(ctx context.Context, leafAlloc *mode
 	return nil
 }
 
-func (s *SegmentIdGenRepoIml) GetAllLeafAllocs(ctx context.Context) (leafs []*model.LeafAlloc, err error) {
-	if err = s.data.db.Table(s.data.tableName).
-		WithContext(ctx).Find(&leafs).Error; err != nil {
-
+func (s *SegmentIdGenRepoIml) GetAllLeafAllocs(ctx context.Context, tag string) (leafs []*model.LeafAlloc, err error) {
+	db := s.data.db.Table(s.data.tableName).WithContext(ctx)
+	if tag != "" {
+		db = db.Where("biz_tag = ?", tag)
+	}
+	if err = db.Find(&leafs).Error; err != nil {
 		return nil, err
 	}
 
@@ -52,7 +54,7 @@ func (s *SegmentIdGenRepoIml) GetAllLeafAllocs(ctx context.Context) (leafs []*mo
 func (s *SegmentIdGenRepoIml) GetLeafAlloc(ctx context.Context, tag string) (seg model.LeafAlloc, err error) {
 	if err = s.data.db.Table(s.data.tableName).WithContext(ctx).Select("biz_tag",
 		"max_id", "step").Where("biz_tag = ?", tag).First(&seg).Error; err != nil {
-		return
+		return seg, fmt.Errorf("%s, %s, %w", "get leaf info error", err, biz.ErrTagNotFound)
 	}
 
 	return

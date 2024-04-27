@@ -3,17 +3,6 @@
   "title": "缓存段查询",
   "remark": null,
   "name": "cache",
-  "toolbar": [
-    {
-      "type": "action",
-      "align": "right",
-      "label": "刷新",
-      "api": "get:/monitor/cache",
-      "primary": true,
-      "actionType": "reload",
-      "target": "crud"
-    }
-  ],
   "body": [
     {
       "type": "crud",
@@ -26,7 +15,45 @@
         }
       },
       "loadDataOnce": true,
-      "filter": null,
+      "syncLocation": false,
+      "filter": {
+        "title": "条件搜索",
+        "controls": [
+          {
+            "type": "tpl",
+            "tpl": "号段名: "
+          },
+          {
+            "type": "input-text",
+            "name": "tag",
+            "placeholder": "通过号段搜索",
+            "trimContents": true,
+            "clearable": true
+          }
+        ],
+        "actions": [
+          {
+            "type": "action",
+            "align": "right",
+            "label": "刷新",
+            "api": "get:/monitor/db",
+            "primary": true,
+            "actionType": "reload",
+            "target": "crud"
+          },
+          {
+            "type": "reset",
+            "label": "重置",
+            "primary": true
+          },
+          {
+            "type": "button",
+            "label": "查询",
+            "level": "primary",
+            "actionType": "submit"
+          }
+        ]
+      },
       "columns": [
         {
           "name": "key",
