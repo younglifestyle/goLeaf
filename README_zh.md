@@ -2,7 +2,10 @@
 
 > There are no two identical leaves in the world.
 >
-> ​               — Leibnitz
+> ```
+> — Leibnitz
+> ```
+>
 
 ## 介绍
 
@@ -74,6 +77,7 @@ http://localhost:8000/monitor/cache
 // 查看DB中号段的数据
 http://localhost:8000/monitor/db
 ```
+
 ### 雪花模式
 
 - 配置
@@ -105,11 +109,11 @@ http://localhost:8000/decodeSnowflakeId
 
 > 例如：http://127.0.0.1:8001/web
 
-![DB号段](doc/image-20221101201529905.png)
+![DB号段](doc/image-20221101201529905.jpg)
 
 ---
 
-![cache中的号段](doc/image-20221101201630411.png)
+![cache中的号段](doc/image-20221101201630411.jpg)
 
 ---
 

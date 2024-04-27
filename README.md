@@ -2,12 +2,14 @@
 
 > There are no two identical leaves in the world.
 >
-> ​               — Leibnitz
-> 
+> ```
+> — Leibnitz
+> ```
+>
+
 [中文文档](./README_zh.md) | [English Document](./README.md)
 
 ## Introduce
-
 
 A number segment pattern and Snowflake ID generator implemented in Go, based on the Kratos framework, suitable for this microservices framework and service discovery service.
 
@@ -77,6 +79,7 @@ http://localhost:8000/monitor/cache
 // db segment data
 http://localhost:8000/monitor/db
 ```
+
 ### Snowflake Pattern
 
 - config
@@ -108,11 +111,11 @@ addr：http:port/web
 
 > 例如：http://127.0.0.1:8001/web
 
-![DB号段](doc/image-20221101201529905.png)
+![DB号段](doc/image-20221101201529905.jpg)
 
 ---
 
-![cache中的号段](doc/image-20221101201630411.png)
+![cache中的号段](doc/image-20221101201630411.jpg)
 
 ---
 
