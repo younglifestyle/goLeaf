@@ -11,6 +11,7 @@ import (
 	"goLeaf/internal/biz/model"
 	"goLeaf/internal/conf"
 	"golang.org/x/sync/singleflight"
+	"math"
 	"sync"
 	"time"
 )
@@ -254,13 +255,13 @@ func (uc *SegmentIdGenUsecase) updateSegmentFromDb(ctx context.Context, bizTag s
 func (uc *SegmentIdGenUsecase) loadNextSegmentFromDb(ctx context.Context, cacheSegmentBuffer *model.SegmentBuffer) {
 	segment := cacheSegmentBuffer.GetSegments()[cacheSegmentBuffer.NextPos()]
 	err := uc.updateSegmentFromDb(ctx, cacheSegmentBuffer.GetKey(), segment)
+
+	cacheSegmentBuffer.WLock()
+	defer cacheSegmentBuffer.WUnLock()
 	if err != nil {
 		cacheSegmentBuffer.GetThreadRunning().Store(false)
 		return
 	}
-
-	cacheSegmentBuffer.WLock()
-	defer cacheSegmentBuffer.WUnLock()
 	cacheSegmentBuffer.SetNextReady(true)
 	cacheSegmentBuffer.GetThreadRunning().Store(false)
 
@@ -272,7 +273,7 @@ func waitAndSleep(segmentBuffer *model.SegmentBuffer) {
 	for segmentBuffer.GetThreadRunning().Load() {
 		roll++
 		if roll > 10000 {
-			time.Sleep(time.Duration(10) * time.Millisecond)
+			time.Sleep(time.Duration(20) * time.Millisecond)
 			break
 		}
 	}
@@ -293,7 +294,7 @@ func (uc *SegmentIdGenUsecase) getIdFromSegmentBuffer(ctx context.Context, cache
 
 			segment = cacheSegmentBuffer.GetCurrent()
 			if !cacheSegmentBuffer.IsNextReady() &&
-				(segment.GetIdle() < int64(0.9*float64(segment.GetStep()))) &&
+				(segment.GetIdle() < int64(math.Ceil(0.9*float64(segment.GetStep())))) &&
 				cacheSegmentBuffer.GetThreadRunning().CAS(false, true) {
 
 				// 协程中传入空ctx，防止主体执行完成后其调用cancel取消上下文
