@@ -92,7 +92,7 @@ func (uc *SnowflakeIdGenUsecase) GetSnowflakeID(ctx context.Context) (int64, err
 
 		var ts = time.Now().UnixMilli()
 
-		if ts > uc.lastTimestamp {
+		if ts < uc.lastTimestamp {
 			offset := uc.lastTimestamp - ts
 			if offset <= 5 {
 				// 等待 2*offset ms就可以唤醒重新尝试获取锁继续执行

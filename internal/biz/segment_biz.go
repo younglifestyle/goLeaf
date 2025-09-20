@@ -204,31 +204,31 @@ func (uc *SegmentIdGenUsecase) updateSegmentFromDb(ctx context.Context, bizTag s
 	} else {
 		// 第三次以及之后的进来 动态设置nextStep
 		// 计算当前更新操作和上一次更新时间差
-		duration := time.Now().Unix() - segmentBuffer.GetUpdateTimeStamp()
+		elapsed := time.Since(time.Unix(segmentBuffer.GetUpdateTimeStamp(), 0))
 		nextStep := segmentBuffer.GetStep()
 		/**
 		 *  动态调整step
-		 *  1) duration < 15 分钟 : step 变为原来的2倍， 最大为 MAX_STEP
-		 *  2) 15分钟 <= duration < 30分钟 : nothing
-		 *  3) duration >= 30 分钟 : 缩小step, 最小为DB中配置的step
+		 *  1) elapsed < 15 分钟 : step 变为原来的2倍， 最大为 MAX_STEP
+		 *  2) 15分钟 <= elapsed < 30分钟 : nothing
+		 *  3) elapsed >= 30 分钟 : 缩小step, 最小为DB中配置的step
 		 *
 		 *  这样做的原因是认为15min一个号段大致满足需求
 		 *  如果updateSegmentFromDb()速度频繁(15min多次)，也就是
 		 *  如果15min这个时间就把step号段用完，为了降低数据库访问频率，
 		 *  我们可以扩大step大小，相反如果将近30min才把号段内的id用完，则可以缩小step
 		 */
-		// duration < 15 分钟 : step 变为原来的2倍. 最大为 MAX_STEP
-		if duration < int64(SegmentDuration) {
+		// elapsed < 15 分钟 : step 变为原来的2倍. 最大为 MAX_STEP
+		if elapsed < SegmentDuration {
 			if nextStep*2 > MaxStep {
 				//do nothing
 			} else {
 				// 步数 * 2
 				nextStep = nextStep * 2
 			}
-		} else if duration < int64(SegmentDuration)*2 {
-			// 15分钟 < duration < 30分钟 : nothing
+		} else if elapsed < 2*SegmentDuration {
+			// 15分钟 < elapsed < 30分钟 : nothing
 		} else {
-			// duration > 30 分钟 : 缩小step, 最小为DB中配置的步数
+			// elapsed >= 30 分钟 : 缩小step, 最小为DB中配置的步数
 			if nextStep/2 >= segmentBuffer.GetMinStep() {
 				nextStep = nextStep / 2
 			}
@@ -364,7 +364,7 @@ func (uc *SegmentIdGenUsecase) autoCleanProc() {
 		_ = uc.autoCleanSeqs()
 	})
 	if err != nil {
-		log.Errorf("Failed to add auto clean cron job : ", err)
+		log.Errorf("Failed to add auto clean cron job : %v", err)
 		return
 	}
 	c.Start()
@@ -384,6 +384,7 @@ func (uc *SegmentIdGenUsecase) loadSeqs() (err error) {
 	// 数据库中的tag
 	insertTags := []string{}
 	removeTags := []string{}
+	dbTags := make(map[string]struct{}, len(bizTags))
 	// 当前的cache中所有的tag
 	cacheTags := map[string]struct{}{}
 	uc.cache.Range(func(k, v interface{}) bool {
@@ -394,6 +395,7 @@ func (uc *SegmentIdGenUsecase) loadSeqs() (err error) {
 	// 下面两步操作：保证cache和数据库tags同步
 	// 1. db中新加的tags灌进cache，并实例化初始对应的SegmentBuffer
 	for _, k := range bizTags {
+		dbTags[k] = struct{}{}
 		if _, ok := cacheTags[k]; !ok {
 			insertTags = append(insertTags, k)
 		}
@@ -411,12 +413,12 @@ func (uc *SegmentIdGenUsecase) loadSeqs() (err error) {
 	}
 
 	// 2. cache中已失效的tags从cache删除
-	for _, k := range bizTags {
-		if _, ok := cacheTags[k]; !ok {
-			removeTags = append(removeTags, k)
+	for tag := range cacheTags {
+		if _, ok := dbTags[tag]; !ok {
+			removeTags = append(removeTags, tag)
 		}
 	}
-	if len(removeTags) > 0 && len(cacheTags) > 0 {
+	if len(removeTags) > 0 {
 		for _, tag := range removeTags {
 			uc.cache.Delete(tag)
 		}
